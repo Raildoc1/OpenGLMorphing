@@ -1,0 +1,2 @@
+C:\Users\kiril\Documents\NSU\opengl-tutorials\YoutubeOpenGL 13 - Model Loading\x64\Debug\YoutubeOpenGL.exe
+C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\x64\Debug\OpenGLMeshMorphing.exe

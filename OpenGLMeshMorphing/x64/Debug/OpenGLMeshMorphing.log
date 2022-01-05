@@ -1,0 +1,11 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(510,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (YoutubeOpenGL.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Main.cpp
+  MeshData.cpp
+C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\MeshData.cpp(6,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\MeshData.cpp(7,40): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\MeshData.cpp(50,17): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\MeshData.cpp(56,21): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+glfw3.lib(monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3.lib(monitor.obj)' or at 'C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\x64\Debug\glfw.pdb'; linking object as if no debug info
+glfw3.lib(win32_joystick.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3.lib(win32_joystick.obj)' or at 'C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\x64\Debug\glfw.pdb'; linking object as if no debug info
+  OpenGLMeshMorphing.vcxproj -> C:\Users\kiril\Documents\NSU\Render\OpenGLMeshMorphing\x64\Debug\OpenGLMeshMorphing.exe
