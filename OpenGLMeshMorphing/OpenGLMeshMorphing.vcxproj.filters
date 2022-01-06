@@ -57,6 +57,9 @@
     <ClCompile Include="MeshData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HarmonicMapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h">
@@ -84,6 +87,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MeshData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HarmonicMapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

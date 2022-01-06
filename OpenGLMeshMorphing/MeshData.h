@@ -11,6 +11,8 @@ struct EdgeData {
 	VertexData v1;
 	VertexData v2;
 
+	bool isBorder;
+
 	bool equals(EdgeData &e) const {
 		if (v1.eqClass == e.v1.eqClass) {
 			return v2.eqClass == e.v2.eqClass;
@@ -18,6 +20,18 @@ struct EdgeData {
 			return v2.eqClass == e.v1.eqClass;
 		}
 		return false;
+	}
+};
+
+struct UniqueEdgeData {
+	int v1;
+	int v2;
+
+	bool isBorder;
+
+	bool equals(UniqueEdgeData& e) {
+		return (v1 == e.v1 && v2 == e.v2) 
+			|| (v1 == e.v2 && v2 == e.v1);
 	}
 };
 
@@ -35,6 +49,7 @@ private:
 	void initEdges();
 	void initVertices();
 	void initBorder();
+	void initUniqueEdges();
 
 public:
 	int getVertexCount() { return vertexCount; }
@@ -44,6 +59,7 @@ public:
 	EdgeData* edges;
 
 	std::vector<EdgeData> border;
+	std::vector<UniqueEdgeData> uniqueEdges;
 
 	MeshData(Mesh& mesh);
 	void init();

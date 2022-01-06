@@ -61,9 +61,11 @@ int main()
 		std::cout << data.vertices[i].index << glm::to_string(data.vertices[i].vertex.position) << " -> " << data.vertices[i].eqClass << std::endl;
 	}*/
 
-	for (size_t i = 0; i < data.getEdgesCount(); i++)
+	std::cout << "size = " << data.uniqueEdges.size() << std::endl;
+
+	for (size_t i = 0; i < data.uniqueEdges.size(); i++)
 	{
-		std::cout << "(" << data.edges[i].v1.eqClass << ", " << data.edges[i].v2.eqClass << ")" << std::endl;
+		std::cout << "(" << data.uniqueEdges[i].v1 << ", " << data.uniqueEdges[i].v2 << ")" << std::endl;
 	}
 
 	std::cout << "border length = " << data.border.size() << std::endl;
