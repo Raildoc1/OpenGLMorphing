@@ -66,6 +66,8 @@ int main()
 		std::cout << "(" << data.edges[i].v1.eqClass << ", " << data.edges[i].v2.eqClass << ")" << std::endl;
 	}
 
+	std::cout << "border length = " << data.border.size() << std::endl;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);

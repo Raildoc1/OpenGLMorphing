@@ -8,12 +8,15 @@ MeshData::MeshData(Mesh& mesh)
 
 	vertices = (VertexData*)calloc(vertexCount, sizeof(VertexData));
 	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
+
+	border = std::vector<EdgeData>();
 }
 
 void MeshData::init()
 {
 	initVertices();
 	initEdges();
+	initBorder();
 
 	initialized = true;
 }
@@ -59,5 +62,31 @@ void MeshData::initVertices()
 		}
 
 		vertices[i] = data;
+	}
+}
+
+void MeshData::initBorder()
+{
+	for (size_t i = 0; i < edgesCount; i++)
+	{
+		bool isDuplicate = false;
+
+		for (size_t j = 0; j < edgesCount; j++)
+		{
+			if (i == j) {
+				continue;
+			}
+
+			if (edges[i].equals(edges[j])) {
+				std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == " 
+					<< i << ": " << "(" << edges[j].v1.eqClass << ", " << edges[j].v2.eqClass << ")" << std::endl;
+				isDuplicate = true;
+				break;
+			}
+		}
+
+		if (!isDuplicate) {
+			border.push_back(edges[i]);
+		}
 	}
 }
