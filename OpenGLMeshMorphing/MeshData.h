@@ -27,6 +27,9 @@ struct UniqueEdgeData {
 	int v1;
 	int v2;
 
+	glm::vec3 pos1;
+	glm::vec3 pos2;
+
 	bool isBorder;
 
 	bool equals(UniqueEdgeData& e) {
@@ -44,12 +47,19 @@ private:
 	int vertexCount;
 	int edgesCount;
 
+	std::vector<int> fixedIndices;
+	float** k;
+
 	bool initialized = false;
 
 	void initEdges();
 	void initVertices();
+	void initFixedIndices();
 	void initBorder();
 	void initUniqueEdges();
+	void initHarmonicK();
+
+	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
 
 public:
 	int getVertexCount() { return vertexCount; }
