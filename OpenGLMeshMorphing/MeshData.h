@@ -21,6 +21,22 @@ struct EdgeData {
 		}
 		return false;
 	}
+
+	bool adjacent(EdgeData& e) {
+		if (this->equals(e)) {
+			return false;
+		}
+
+		if (v1.eqClass == e.v1.eqClass || v1.eqClass == e.v2.eqClass) {
+			return true;
+		}
+
+		if (v2.eqClass == e.v1.eqClass || v2.eqClass == e.v2.eqClass) {
+			return true;
+		}
+
+		return false;
+	}
 };
 
 struct UniqueEdgeData {
@@ -56,6 +72,7 @@ private:
 	void initVertices();
 	void initFixedIndices();
 	void initBorder();
+	void sortBorder();
 	void initUniqueEdges();
 	void initHarmonicK();
 

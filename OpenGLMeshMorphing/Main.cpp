@@ -70,6 +70,10 @@ int main()
 
 	std::cout << "border length = " << data.border.size() << std::endl;
 
+	for (size_t i = 0; i < data.border.size(); i++)
+	{
+		std::cout << "(" << data.border[i].v1.eqClass << ", " << data.border[i].v2.eqClass << ")" << std::endl;
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{

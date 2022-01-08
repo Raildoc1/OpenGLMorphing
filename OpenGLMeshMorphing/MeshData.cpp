@@ -97,8 +97,8 @@ void MeshData::initBorder()
 			}
 
 			if (edges[i].equals(edges[j])) {
-				std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == " 
-					<< i << ": " << "(" << edges[j].v1.eqClass << ", " << edges[j].v2.eqClass << ")" << std::endl;
+				/*std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == " 
+					<< i << ": " << "(" << edges[j].v1.eqClass << ", " << edges[j].v2.eqClass << ")" << std::endl;*/
 				isDuplicate = true;
 				break;
 			}
@@ -109,6 +109,23 @@ void MeshData::initBorder()
 
 		if (isBorder) {
 			border.push_back(edges[i]);
+		}
+	}
+	sortBorder();
+}
+
+void MeshData::sortBorder()
+{
+	for (size_t i = 0; i < border.size() - 1; i++)
+	{
+		for (size_t j = i + 1; j < border.size(); j++)
+		{
+			if (border[i].adjacent(border[j]) && (i + 1 != j)) {
+				EdgeData t = border[i + 1];
+				border[i + 1] = border[j];
+				border[j] = t;
+				break;
+			}
 		}
 	}
 }
