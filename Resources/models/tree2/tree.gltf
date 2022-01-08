@@ -15,7 +15,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "Cube"
+            "name" : "Cube.001"
         }
     ],
     "materials" : [
@@ -36,7 +36,7 @@
     ],
     "meshes" : [
         {
-            "name" : "Cube",
+            "name" : "Cube.001",
             "primitives" : [
                 {
                     "attributes" : {
@@ -55,7 +55,7 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 360,
+            "count" : 358,
             "max" : [
                 5.857504844665527,
                 -0.867556631565094,
@@ -63,7 +63,7 @@
             ],
             "min" : [
                 -5.857504844665527,
-                -16.96827507019043,
+                -15.927068710327148,
                 -5.801046848297119
             ],
             "type" : "VEC3"
@@ -71,19 +71,19 @@
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 360,
+            "count" : 358,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 360,
+            "count" : 358,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 360,
+            "count" : 358,
             "normalized" : true,
             "type" : "VEC4"
         },
@@ -97,33 +97,33 @@
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 4320,
+            "byteLength" : 4296,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 4320,
-            "byteOffset" : 4320
+            "byteLength" : 4296,
+            "byteOffset" : 4296
         },
         {
             "buffer" : 0,
-            "byteLength" : 2880,
-            "byteOffset" : 8640
+            "byteLength" : 2864,
+            "byteOffset" : 8592
         },
         {
             "buffer" : 0,
-            "byteLength" : 2880,
-            "byteOffset" : 11520
+            "byteLength" : 2864,
+            "byteOffset" : 11456
         },
         {
             "buffer" : 0,
             "byteLength" : 720,
-            "byteOffset" : 14400
+            "byteOffset" : 14320
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 15120,
+            "byteLength" : 15040,
             "uri" : "tree.bin"
         }
     ]

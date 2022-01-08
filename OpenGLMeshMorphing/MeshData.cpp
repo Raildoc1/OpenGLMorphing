@@ -63,6 +63,7 @@ void MeshData::initVertices()
 		data.vertex = mesh.vertices[i];
 		data.index = i;
 		data.eqClass = -1;
+		data.isBorder = false;
 
 		for (size_t j = 0; j < vertexCount; j++)
 		{
@@ -109,6 +110,8 @@ void MeshData::initBorder()
 
 		if (isBorder) {
 			border.push_back(edges[i]);
+			vertices[edges[i].v1.eqClass].isBorder = true;
+			vertices[edges[i].v2.eqClass].isBorder = true;
 		}
 	}
 	sortBorder();

@@ -21,6 +21,8 @@ void HarmonicMapper::initMap(MeshData* mesh, std::vector<MapEntity>& map)
 {
 	for (size_t i = 0; i < mesh->getVertexCount(); i++)
 	{
-
+		if (mesh->vertices[i].isBorder) {
+			std::cout << i << " is border vertex" << std::endl;
+		}
 	}
 }

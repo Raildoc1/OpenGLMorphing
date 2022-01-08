@@ -5,6 +5,7 @@ struct VertexData {
 	Vertex vertex;
 	int index;
 	int eqClass;
+	bool isBorder;
 };
 
 struct EdgeData {

@@ -5,8 +5,8 @@ namespace fs = std::filesystem;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include"Model.h"
-#include "MeshData.h"
 #include <glm/gtx/string_cast.hpp>
+#include "HarmonicMapper.h"
 
 
 const unsigned int width = 800;
@@ -36,7 +36,7 @@ int main()
 	Shader shaderProgram("default.vert", "default.frag");
 
 	glm::vec4 lightColor = glm::vec4(0.43f, 0.91f, 0.85f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
+	glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, -5.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 
@@ -49,31 +49,40 @@ int main()
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
-	std::string modelPath = "/Resources/models/tree/tree.gltf";
 
-	Model model((parentDir + modelPath).c_str());
+	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
+	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
 
-	MeshData data = MeshData(model.GetMesh());
-	data.init();
+	Model sourceModel((parentDir + sourceModelPath).c_str());
+	Model targetModel((parentDir + targetModelPath).c_str());
+
+	MeshData sourceData = MeshData(sourceModel.GetMesh());
+	MeshData targetData = MeshData(targetModel.GetMesh());
+
+	sourceData.init();
+	targetData.init();
 
 	/*for (size_t i = 0; i < data.getVertexCount(); i++)
 	{
 		std::cout << data.vertices[i].index << glm::to_string(data.vertices[i].vertex.position) << " -> " << data.vertices[i].eqClass << std::endl;
 	}*/
 
-	std::cout << "size = " << data.uniqueEdges.size() << std::endl;
+	std::cout << "size = " << sourceData.uniqueEdges.size() << std::endl;
 
-	for (size_t i = 0; i < data.uniqueEdges.size(); i++)
+	for (size_t i = 0; i < sourceData.uniqueEdges.size(); i++)
 	{
-		std::cout << "(" << data.uniqueEdges[i].v1 << ", " << data.uniqueEdges[i].v2 << ")" << std::endl;
+		std::cout << "(" << sourceData.uniqueEdges[i].v1 << ", " << sourceData.uniqueEdges[i].v2 << ")" << std::endl;
 	}
 
-	std::cout << "border length = " << data.border.size() << std::endl;
+	std::cout << "border length = " << sourceData.border.size() << std::endl;
 
-	for (size_t i = 0; i < data.border.size(); i++)
+	for (size_t i = 0; i < sourceData.border.size(); i++)
 	{
-		std::cout << "(" << data.border[i].v1.eqClass << ", " << data.border[i].v2.eqClass << ")" << std::endl;
+		std::cout << "(" << sourceData.border[i].v1.eqClass << ", " << sourceData.border[i].v2.eqClass << ")" << std::endl;
 	}
+
+	HarmonicMapper mapper(sourceData, targetData);
+	mapper.init();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -83,7 +92,7 @@ int main()
 		camera.Inputs(window);
 		camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
-		model.Draw(shaderProgram, camera);
+		sourceModel.Draw(shaderProgram, camera);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
