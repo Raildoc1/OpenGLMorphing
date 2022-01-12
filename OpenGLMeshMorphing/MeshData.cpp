@@ -42,12 +42,15 @@ void MeshData::initEdges()
 
 		e1.v1 = vertices[mesh.indices[i + 0]];
 		e1.v2 = vertices[mesh.indices[i + 1]];
+		e1.length = glm::distance(e1.v1.vertex.position, e1.v2.vertex.position);
 
 		e2.v1 = vertices[mesh.indices[i + 1]];
 		e2.v2 = vertices[mesh.indices[i + 2]];
+		e2.length = glm::distance(e2.v1.vertex.position, e2.v2.vertex.position);
 
 		e3.v1 = vertices[mesh.indices[i + 2]];
 		e3.v2 = vertices[mesh.indices[i + 0]];
+		e3.length = glm::distance(e3.v1.vertex.position, e3.v2.vertex.position);
 
 		edges[i + 0] = e1;
 		edges[i + 1] = e2;
@@ -115,6 +118,13 @@ void MeshData::initBorder()
 		}
 	}
 	sortBorder();
+
+	borderLength = 0.0f;
+
+	for (size_t i = 0; i < border.size(); i++)
+	{
+		borderLength += border[i].length;
+	}
 }
 
 void MeshData::sortBorder()

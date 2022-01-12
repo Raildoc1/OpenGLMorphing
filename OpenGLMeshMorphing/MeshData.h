@@ -12,6 +12,8 @@ struct EdgeData {
 	VertexData v1;
 	VertexData v2;
 
+	float length;
+
 	bool isBorder;
 
 	bool equals(EdgeData &e) const {
@@ -64,6 +66,8 @@ private:
 	int vertexCount;
 	int edgesCount;
 
+	float borderLength = 0.0f;
+
 	std::vector<int> fixedIndices;
 	float** k;
 
@@ -82,6 +86,7 @@ private:
 public:
 	int getVertexCount() { return vertexCount; }
 	int getEdgesCount() { return edgesCount; }
+	float getBorderLength() { return borderLength; }
 
 	VertexData* vertices;
 	EdgeData* edges;

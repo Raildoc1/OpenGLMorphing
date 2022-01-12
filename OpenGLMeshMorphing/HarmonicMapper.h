@@ -1,10 +1,10 @@
 #pragma once
 #include "MeshData.h"
+#include <map>
 
 struct MapEntity {
-	int eqClass;
 	glm::vec2 image;
-	bool isBorder;
+	bool locked;
 };
 
 class HarmonicMapper
@@ -15,14 +15,16 @@ private:
 
 	bool initialized = false;
 
+	float calculateEnergy();
+
 public:
 	HarmonicMapper(MeshData &source, MeshData &target);
 
-	std::vector<MapEntity> sourceMap;
-	std::vector<MapEntity> targetMap;
+	std::map<int, MapEntity> sourceMap;
+	std::map<int, MapEntity> targetMap;
 
 	void init();
 
-	void initMap(MeshData* mesh, std::vector<MapEntity> &map);
+	void initMap(MeshData* mesh, std::map<int, MapEntity> &map);
 };
 

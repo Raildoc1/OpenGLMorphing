@@ -30,6 +30,7 @@ vec4 direcLight()
 	vec3 lightDirection = normalize(vec3(-3.0f, -5.0f, -2.0f));
 	float diffuse = max(dot(normal, lightDirection), 0.0f);
 
+	//return vec4(1.0f);
 	return vec4(diffuse + ambient) * lightColor;
 }
 

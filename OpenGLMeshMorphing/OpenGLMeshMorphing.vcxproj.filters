@@ -100,5 +100,11 @@
     <None Include="default.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="dot.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="dot.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

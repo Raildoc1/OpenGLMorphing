@@ -4,9 +4,10 @@ namespace fs = std::filesystem;
 //------------------------------
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include"Model.h"
-#include <glm/gtx/string_cast.hpp>
+
+#include "Model.h"
 #include "HarmonicMapper.h"
+#include <glm/gtx/string_cast.hpp>
 
 
 const unsigned int width = 800;
@@ -62,6 +63,9 @@ int main()
 	sourceData.init();
 	targetData.init();
 
+	Shader debugShader("dot.vert", "dot.frag");
+	debugShader.Activate();
+
 	/*for (size_t i = 0; i < data.getVertexCount(); i++)
 	{
 		std::cout << data.vertices[i].index << glm::to_string(data.vertices[i].vertex.position) << " -> " << data.vertices[i].eqClass << std::endl;
@@ -84,21 +88,55 @@ int main()
 	HarmonicMapper mapper(sourceData, targetData);
 	mapper.init();
 
+	int vertexAmount = mapper.sourceMap.size();
+
+	GLfloat* map = (GLfloat*)calloc(vertexAmount * 2, sizeof(GLfloat*));
+
+	for (size_t i = 0; i < vertexAmount * 2; i += 2)
+	{
+		map[i + 0] = mapper.sourceMap[i / 2].image.x;
+		map[i + 1] = mapper.sourceMap[i / 2].image.y;
+
+		std::cout << "(" << map[i + 0] << ", " << map[i + 1] << ")" << std::endl;
+	}
+
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertexAmount * 2, map, GL_STATIC_DRAW);
+
+	GLint position_attribute = glGetAttribLocation(debugShader.ID, "position");
+	
+	glVertexAttribPointer(position_attribute, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(position_attribute);
+
+	glEnable(GL_PROGRAM_POINT_SIZE);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		camera.Inputs(window);
 		camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
-		sourceModel.Draw(shaderProgram, camera);
+		//sourceModel.Draw(shaderProgram, camera);
+
+		glBindVertexArray(vao);
+		glDrawArrays(GL_POINTS, 0, vertexAmount);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
 	shaderProgram.Delete();
+	debugShader.Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
