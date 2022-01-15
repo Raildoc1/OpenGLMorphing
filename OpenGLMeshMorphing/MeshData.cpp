@@ -188,6 +188,14 @@ void MeshData::initUniqueEdges()
 
 void MeshData::initHarmonicK()
 {
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		for (size_t j = 0; j < vertexCount; j++)
+		{
+			k[i][j] = 0.0f;
+		}
+	}
+
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
 		if (uniqueEdges[i].isBorder) {
@@ -200,9 +208,9 @@ void MeshData::initHarmonicK()
 
 		for (size_t j = 0; j < mesh.indices.size(); j += 3)
 		{
-			int v1 = mesh.indices[j + 0];
-			int v2 = mesh.indices[j + 1];
-			int v3 = mesh.indices[j + 2];
+			int v1 = vertices[mesh.indices[j + 0]].eqClass;
+			int v2 = vertices[mesh.indices[j + 1]].eqClass;
+			int v3 = vertices[mesh.indices[j + 2]].eqClass;
 
 			int e1 = uniqueEdges[i].v1;
 			int e2 = uniqueEdges[i].v2;
@@ -219,11 +227,17 @@ void MeshData::initHarmonicK()
 				}
 			}
 		}
+		
+		if (k1 == -1 || k2 == -1) {
+			std::cerr << "Triangle not found!" << std::endl;
+		}
 
 		glm::vec3 vk1 = vertices[k1].vertex.position;
 		glm::vec3 vk2 = vertices[k2].vertex.position;
 		glm::vec3 vi = uniqueEdges[i].pos1;
 		glm::vec3 vj = uniqueEdges[i].pos2;
+
+		std::cout << "vertices[" << k1 << "].vertex.position = " << "(" << vk1.x << ", " << vk1.y << ")" << std::endl;
 
 		float lik1 = glm::distance2(vi, vk1);
 		float ljk1 = glm::distance2(vj, vk1);
@@ -238,6 +252,9 @@ void MeshData::initHarmonicK()
 
 		float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
 		float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
+
+		std::cout << "lik1 = (" << vi.x <<  ", " << vi.y << ") to (" << vk1.x << ", " << vk1.y << ") = " << lik1 << "; ljk1 = " << ljk1 << "; lik2 = " << lik2 << "; ljk2 = " << ljk2 << "; lji = " << lji << std::endl;
+		std::cout << "Aijk1 = " << Aijk1 << "; Aijk2 = " << Aijk2 << std::endl;
 
 		k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = ((lik1 + ljk1 - lji) / Aijk1) + ((lik2 + ljk2 - lji) / Aijk2);
 	}
@@ -319,7 +336,8 @@ void MeshData::initMap()
 		std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
 
 		MapEntity e;
-		e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
+		//e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
+		e.image = glm::vec2(0.0f, 0.0f);
 		e.locked = false;
 
 		std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
@@ -352,7 +370,7 @@ float MeshData::calculateMapEnergy()
 		derivatives[v1] += delta;
 		derivatives[v2] -= delta;
 
-		std::cout << "derivatives[" << v1 << "] = " << "(" << derivatives[v1].x << ", " << derivatives[v1].y << ")" << std::endl;
+		//std::cout << "derivatives[" << v1 << "] = " << "(" << derivatives[v1].x << ", " << derivatives[v1].y << ") - k[" << v1 << "][" << v2 << "] = " << k[v1][v2] << std::endl;
 
 		result += k[v1][v2] * glm::distance2(map[v1].image, map[v2].image);
 	}
@@ -377,7 +395,7 @@ float MeshData::tickMap()
 			continue;
 		}
 
-		map[x.first].image -= 0.0001f * derivatives[x.first];
+		map[x.first].image -= 0.001f * derivatives[x.first];
 	}
 
 	return energyDelta;
@@ -398,7 +416,7 @@ void MeshData::harmonizeMap()
 			delta = -delta;
 		}
 
-	} while (iterations < MAX_ITER && delta > 0.1f);
+	} while (iterations < MAX_ITER && delta > 0.01f);
 
 	std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 }

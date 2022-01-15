@@ -63,6 +63,8 @@ int main()
 	sourceData.init();
 	targetData.init();
 
+	sourceData.harmonizeMap();
+
 	Shader debugShader("dot.vert", "dot.frag");
 	debugShader.Activate();
 
@@ -119,8 +121,6 @@ int main()
 	glEnableVertexAttribArray(0);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
-
-	sourceData.harmonizeMap();
 
 	while (!glfwWindowShouldClose(window))
 	{
