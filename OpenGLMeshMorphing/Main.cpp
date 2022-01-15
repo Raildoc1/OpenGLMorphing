@@ -88,16 +88,19 @@ int main()
 	HarmonicMapper mapper(sourceData, targetData);
 	mapper.init();
 
-	int vertexAmount = mapper.sourceMap.size();
+	int vertexAmount = sourceData.map.size();
+	int endgesAmount = sourceData.uniqueEdges.size();
 
-	GLfloat* map = (GLfloat*)calloc(vertexAmount * 2, sizeof(GLfloat*));
+	GLfloat* map = (GLfloat*)calloc(endgesAmount * 4, sizeof(GLfloat*));
 
-	for (size_t i = 0; i < vertexAmount * 2; i += 2)
+	int j = 0;
+
+	for (size_t i = 0; i < endgesAmount; i++, j += 4)
 	{
-		map[i + 0] = mapper.sourceMap[i / 2].image.x;
-		map[i + 1] = mapper.sourceMap[i / 2].image.y;
-
-		std::cout << "(" << map[i + 0] << ", " << map[i + 1] << ")" << std::endl;
+		map[j + 0] = sourceData.map[sourceData.uniqueEdges[i].v1].image.x;
+		map[j + 1] = sourceData.map[sourceData.uniqueEdges[i].v1].image.y;
+		map[j + 2] = sourceData.map[sourceData.uniqueEdges[i].v2].image.x;
+		map[j + 3] = sourceData.map[sourceData.uniqueEdges[i].v2].image.y;
 	}
 
 	GLuint vao;
@@ -108,14 +111,16 @@ int main()
 	glGenBuffers(1, &vbo);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertexAmount * 2, map, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * endgesAmount * 4, map, GL_STATIC_DRAW);
 
 	GLint position_attribute = glGetAttribLocation(debugShader.ID, "position");
 	
-	glVertexAttribPointer(position_attribute, 2, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(position_attribute);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
+
+	sourceData.harmonizeMap();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -129,7 +134,7 @@ int main()
 		//sourceModel.Draw(shaderProgram, camera);
 
 		glBindVertexArray(vao);
-		glDrawArrays(GL_POINTS, 0, vertexAmount);
+		glDrawArrays(GL_LINES, 0, endgesAmount * 2);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

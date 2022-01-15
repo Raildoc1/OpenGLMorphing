@@ -18,6 +18,20 @@ MeshData::MeshData(Mesh& mesh)
 	border = std::vector<EdgeData>();
 	uniqueEdges = std::vector<UniqueEdgeData>();
 	fixedIndices = std::vector<int>();
+	map = std::map<int, MapEntity>();
+	derivatives = std::map<int, glm::vec2>();
+}
+
+MeshData::~MeshData()
+{
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		delete k[i];
+	}
+
+	delete k;
+	delete vertices;
+	delete edges;
 }
 
 void MeshData::init()
@@ -28,6 +42,8 @@ void MeshData::init()
 	initBorder();
 	initUniqueEdges();
 	initHarmonicK();
+	initMap();
+	lastEnergy = calculateMapEnergy();
 
 	initialized = true;
 }
@@ -257,4 +273,132 @@ int MeshData::edgeInTriangle(int e1, int e2, int t1, int t2, int t3)
 	}
 
 	return -1;
+}
+
+void MeshData::initMap()
+{
+	std::cout << "Border vertices:" << std::endl;
+
+	float currentLength = 0.0f;
+	float dPi = glm::pi<float>() * 2.0f;
+	float borderLength = getBorderLength();
+
+	for (size_t i = 0; i < border.size(); i++)
+	{
+		float t = dPi * currentLength / borderLength;
+
+		MapEntity e;
+		e.locked = true;
+		e.image = glm::vec2(glm::cos(t), glm::sin(t));
+
+		currentLength += border[i].length;
+
+		map[border[i].v1.eqClass] = e;
+	}
+
+	std::cout << "Border length: " << getBorderLength() << std::endl;
+
+	for (size_t i = 0; i < getVertexCount(); i++)
+	{
+		int eqClass = vertices[i].eqClass;
+		bool duplicate = false;
+
+		for (size_t i = 0; i < map.size(); i++)
+		{
+			if (map.count(eqClass) > 0) {
+				duplicate = true;
+				break;
+			}
+		}
+
+		if (duplicate) {
+			continue;
+		}
+
+		float t = dPi * eqClass / (float)vertexCount;
+		std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
+
+		MapEntity e;
+		e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
+		e.locked = false;
+
+		std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
+
+		map[eqClass] = e;
+	}
+
+}
+
+float MeshData::calculateMapEnergy()
+{
+	if (!initialized) {
+		return 0.0f;
+	}
+
+	float result = 0.0f;
+
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		derivatives[uniqueEdges[i].v1] = glm::vec2(0.0f, 0.0f);
+		derivatives[uniqueEdges[i].v2] = glm::vec2(0.0f, 0.0f);
+	}
+
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		int v1 = uniqueEdges[i].v1;
+		int v2 = uniqueEdges[i].v2;
+		glm::vec2 delta = k[v1][v2] * (map[v1].image - map[v2].image);
+
+		derivatives[v1] += delta;
+		derivatives[v2] -= delta;
+
+		std::cout << "derivatives[" << v1 << "] = " << "(" << derivatives[v1].x << ", " << derivatives[v1].y << ")" << std::endl;
+
+		result += k[v1][v2] * glm::distance2(map[v1].image, map[v2].image);
+	}
+
+	return result / 2.0f;
+}
+
+float MeshData::tickMap()
+{
+	if (!initialized) {
+		return 0.0f;
+	}
+
+	float energy = calculateMapEnergy();
+	float energyDelta = energy - lastEnergy;
+
+	lastEnergy = energy;
+
+	for (auto const& x : map)
+	{
+		if (x.second.locked) {
+			continue;
+		}
+
+		map[x.first].image -= 0.0001f * derivatives[x.first];
+	}
+
+	return energyDelta;
+}
+
+void MeshData::harmonizeMap()
+{
+	int iterations = 0;
+	float delta;
+	do
+	{
+		iterations++;
+		delta = tickMap();
+
+		std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
+
+		if (delta < 0.0f) {
+			delta = -delta;
+		}
+
+	} while (iterations < MAX_ITER && delta > 0.1f);
+
+	std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 }
