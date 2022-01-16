@@ -307,6 +307,8 @@ void MeshData::initMap()
 		MapEntity e;
 		e.locked = true;
 		e.image = glm::vec2(glm::cos(t), glm::sin(t));
+		e.border = true;
+		e.phi = t;
 
 		currentLength += border[i].length;
 
@@ -339,6 +341,8 @@ void MeshData::initMap()
 		//e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
 		e.image = glm::vec2(0.0f, 0.0f);
 		e.locked = false;
+		e.border = false;
+		e.phi = 0.0f;
 
 		std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
 

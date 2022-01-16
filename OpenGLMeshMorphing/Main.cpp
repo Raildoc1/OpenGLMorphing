@@ -10,8 +10,8 @@ namespace fs = std::filesystem;
 #include <glm/gtx/string_cast.hpp>
 
 
-const unsigned int width = 800;
-const unsigned int height = 800;
+const unsigned int width = 1000;
+const unsigned int height = 1000;
 
 
 int main()
@@ -64,6 +64,7 @@ int main()
 	targetData.init();
 
 	sourceData.harmonizeMap();
+	targetData.harmonizeMap();
 
 	Shader debugShader("dot.vert", "dot.frag");
 	debugShader.Activate();
@@ -90,19 +91,37 @@ int main()
 	HarmonicMapper mapper(sourceData, targetData);
 	mapper.init();
 
-	int vertexAmount = sourceData.map.size();
-	int endgesAmount = sourceData.uniqueEdges.size();
+	int sourceEdgesAmount = sourceData.uniqueEdges.size();
+	int targetEdgesAmount = targetData.uniqueEdges.size();
+	int superEdgesAmount = mapper.uniqueEdges.size();
+	int totalEdgesAmount = sourceEdgesAmount + targetEdgesAmount + superEdgesAmount;
 
-	GLfloat* map = (GLfloat*)calloc(endgesAmount * 4, sizeof(GLfloat*));
+	GLfloat* map = (GLfloat*)calloc(totalEdgesAmount * 4, sizeof(GLfloat*));
 
 	int j = 0;
 
-	for (size_t i = 0; i < endgesAmount; i++, j += 4)
+	for (size_t i = 0; i < sourceEdgesAmount; i++, j += 4)
 	{
-		map[j + 0] = sourceData.map[sourceData.uniqueEdges[i].v1].image.x;
-		map[j + 1] = sourceData.map[sourceData.uniqueEdges[i].v1].image.y;
-		map[j + 2] = sourceData.map[sourceData.uniqueEdges[i].v2].image.x;
-		map[j + 3] = sourceData.map[sourceData.uniqueEdges[i].v2].image.y;
+		map[j + 0] = sourceData.map[sourceData.uniqueEdges[i].v1].image.x * 0.5f + 0.5f;
+		map[j + 1] = sourceData.map[sourceData.uniqueEdges[i].v1].image.y * 0.5f + 0.5f;
+		map[j + 2] = sourceData.map[sourceData.uniqueEdges[i].v2].image.x * 0.5f + 0.5f;
+		map[j + 3] = sourceData.map[sourceData.uniqueEdges[i].v2].image.y * 0.5f + 0.5f;
+	}
+
+	for (size_t i = 0; i < targetEdgesAmount; i++, j += 4)
+	{
+		map[j + 0] = targetData.map[targetData.uniqueEdges[i].v1].image.x * 0.5f - 0.5f;
+		map[j + 1] = targetData.map[targetData.uniqueEdges[i].v1].image.y * 0.5f - 0.5f;
+		map[j + 2] = targetData.map[targetData.uniqueEdges[i].v2].image.x * 0.5f - 0.5f;
+		map[j + 3] = targetData.map[targetData.uniqueEdges[i].v2].image.y * 0.5f - 0.5f;
+	}
+
+	for (size_t i = 0; i < superEdgesAmount; i++, j += 4)
+	{
+		map[j + 0] = mapper.map[mapper.uniqueEdges[i].v1].image.x * 0.5f - 0.5f;
+		map[j + 1] = mapper.map[mapper.uniqueEdges[i].v1].image.y * 0.5f + 0.5f;
+		map[j + 2] = mapper.map[mapper.uniqueEdges[i].v2].image.x * 0.5f - 0.5f;
+		map[j + 3] = mapper.map[mapper.uniqueEdges[i].v2].image.y * 0.5f + 0.5f;
 	}
 
 	GLuint vao;
@@ -113,7 +132,7 @@ int main()
 	glGenBuffers(1, &vbo);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * endgesAmount * 4, map, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * totalEdgesAmount * 4, map, GL_STATIC_DRAW);
 
 	GLint position_attribute = glGetAttribLocation(debugShader.ID, "position");
 	
@@ -134,7 +153,10 @@ int main()
 		//sourceModel.Draw(shaderProgram, camera);
 
 		glBindVertexArray(vao);
-		glDrawArrays(GL_LINES, 0, endgesAmount * 2);
+		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 1.0f, 1.0f, 1.0f);
+		glDrawArrays(GL_LINES, 0, totalEdgesAmount * 2);
+		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 0.0f, 0.0f, 1.0f);
+		glDrawArrays(GL_POINTS, 0, totalEdgesAmount * 2);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

@@ -12,6 +12,8 @@ struct VertexData {
 struct MapEntity {
 	glm::vec2 image;
 	bool locked;
+	bool border;
+	float phi;
 };
 
 struct EdgeData {
