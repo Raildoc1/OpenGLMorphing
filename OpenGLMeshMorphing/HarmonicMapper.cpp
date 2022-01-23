@@ -11,6 +11,7 @@ HarmonicMapper::HarmonicMapper(MeshData &source, MeshData &target)
 	border = std::vector<BorderEntity>();
 
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
+	firstExtraIndex = lastVertexIndex + 1;
 }
 
 bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection)
@@ -156,8 +157,22 @@ bool HarmonicMapper::fixIntersection()
 
 		bool intersectionFound = false;
 
-		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
+		if (i > firstExtraIndex) {
+			extraIndexesReached = true;
+		}
+
+		size_t j = i + 1;
+
+		if (extraIndexesReached && j < firstExtraIndex) {
+			j = firstExtraIndex;
+		}
+
+		for (; j < uniqueEdges.size(); j++)
 		{
+			if (i == j) {
+				continue;
+			}
+
 			if (uniqueEdges[j].v1 == -1) {
 				continue;
 			}
@@ -172,7 +187,7 @@ bool HarmonicMapper::fixIntersection()
 			if (intersectionFound = TryFindIntersection(map[a].image, map[b].image, map[c].image, map[d].image, &intersection)) {
 
 				//std::cout << "intersect: (" << to_string(map[a].image) << ", " << to_string(map[b].image) << ") - (" << to_string(map[c].image) << ", " << to_string(map[d].image) << ")" << std::endl;
-				std::cout << "intersect: (" << a << ", " << b << ") - (" << c << ", " << d << ")" << std::endl;
+				//std::cout << "intersect: (" << a << ", " << b << ") - (" << c << ", " << d << ")" << std::endl;
 
 				MapEntity e;
 				e.border = false;

@@ -20,6 +20,14 @@ public:
 	glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 cameraMatrix = glm::mat4(1.0f);
 
+	double lastMouseX = 0.0f;
+	double lastMouseY = 0.0f;
+
+	double mouseDeltaX = 0.0f;
+	double mouseDeltaY = 0.0f;
+
+	float scale = 1.0f;
+
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 

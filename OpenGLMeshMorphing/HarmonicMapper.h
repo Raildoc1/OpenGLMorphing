@@ -15,7 +15,10 @@ private:
 	MeshData* target;
 
 	bool initialized = false;
+
 	int lastVertexIndex = 0;
+	int firstExtraIndex = 0;
+	bool extraIndexesReached = false;
 
 public:
 	std::map<int, MapEntity> map;

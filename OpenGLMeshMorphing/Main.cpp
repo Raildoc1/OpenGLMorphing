@@ -13,6 +13,12 @@ namespace fs = std::filesystem;
 const unsigned int width = 1000;
 const unsigned int height = 1000;
 
+float scale = 0.0f;
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	scale += yoffset * 0.1f;
+}
 
 int main()
 {
@@ -141,6 +147,10 @@ int main()
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
+	glm::vec2 offset = glm::vec2(0.0f, 0.0f);
+
+	glfwSetScrollCallback(window, scroll_callback);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -150,9 +160,18 @@ int main()
 		camera.Inputs(window);
 		camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
+		float w = glm::exp(-scale);
+		offset.x += camera.mouseDeltaX * 0.001f * (1.0f / w);
+		offset.y -= camera.mouseDeltaY * 0.001f * (1.0f / w);
+
+		//std::cout << to_string(offset) << " : " << camera.mouseDeltaX << ", " << camera.mouseDeltaY << std::endl;
 		//sourceModel.Draw(shaderProgram, camera);
 
+		std::cout << "scale: " << w << std::endl;
+
 		glBindVertexArray(vao);
+		glUniform4f(glGetUniformLocation(debugShader.ID, "offset"), offset.x, offset.y, 0.0f, 0.0f);
+		glUniform1f(glGetUniformLocation(debugShader.ID, "scale"), w);
 		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 1.0f, 1.0f, 1.0f);
 		glDrawArrays(GL_LINES, 0, totalEdgesAmount * 2);
 		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 0.0f, 0.0f, 1.0f);

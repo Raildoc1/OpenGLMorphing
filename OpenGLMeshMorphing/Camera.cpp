@@ -1,7 +1,5 @@
 #include"Camera.h"
 
-
-
 Camera::Camera(int width, int height, glm::vec3 position)
 {
 	Camera::width = width;
@@ -29,8 +27,6 @@ void Camera::Matrix(Shader& shader, const char* uniform)
 	// Exports camera matrix
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
 }
-
-
 
 void Camera::Inputs(GLFWwindow* window)
 {
@@ -68,7 +64,6 @@ void Camera::Inputs(GLFWwindow* window)
 		speed = 0.03f;
 	}
 
-
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
@@ -78,8 +73,20 @@ void Camera::Inputs(GLFWwindow* window)
 		// Prevents camera from jumping on the first click
 		if (firstClick)
 		{
-			glfwSetCursorPos(window, (width / 2), (height / 2));
+			//glfwSetCursorPos(window, (width / 2), (height / 2));
+			glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
 			firstClick = false;
+		} else {
+			double currentMouseX;
+			double currentMouseY;
+
+			glfwGetCursorPos(window, &currentMouseX, &currentMouseY);
+
+			mouseDeltaX = currentMouseX - lastMouseX;
+			mouseDeltaY = currentMouseY - lastMouseY;
+
+			lastMouseX = currentMouseX;
+			lastMouseY = currentMouseY;
 		}
 
 		// Stores the coordinates of the cursor
@@ -106,7 +113,7 @@ void Camera::Inputs(GLFWwindow* window)
 		Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
 
 		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
-		glfwSetCursorPos(window, (width / 2), (height / 2));
+		//glfwSetCursorPos(window, (width / 2), (height / 2));
 	}
 	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 	{
@@ -114,5 +121,8 @@ void Camera::Inputs(GLFWwindow* window)
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
+
+		mouseDeltaX = 0.0f;
+		mouseDeltaY = 0.0f;
 	}
 }
