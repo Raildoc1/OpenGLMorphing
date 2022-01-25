@@ -38,6 +38,7 @@ void HarmonicMapper::init()
 	initEdges();
 	fixMapBound();
 	fixIntersections();
+	retriangulate();
 	initialized = true;
 }
 
@@ -272,6 +273,43 @@ void HarmonicMapper::fixUniqueEdges()
 	}
 }
 
+void HarmonicMapper::retriangulate()
+{
+	for (auto const& x : map)
+	{
+		for (auto const& y : map)
+		{
+			if (x.first == y.first) {
+				continue;
+			}
+
+			if (hasEdge(x.first, y.first)) {
+				continue;
+			}
+
+			std::cout << "unique edges amount = " << uniqueEdges.size() << std::endl;
+			for (auto const& e : uniqueEdges)
+			{
+				glm::vec2 intersection;
+				if (TryFindIntersection(x.second.image, y.second.image, map[e.v1].image, map[e.v2].image, &intersection)) {
+					goto out;
+				}
+			}
+
+			UniqueEdgeData e;
+			e.isBorder = false;
+			e.v1 = x.first;
+			e.v2 = y.first;
+			e.pos1 = glm::vec3();
+			e.pos2 = glm::vec3();
+
+			uniqueEdges.push_back(e);
+
+		out:;
+		}
+	}
+}
+
 void HarmonicMapper::Equalize(int v1, int v2)
 {
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
@@ -285,4 +323,17 @@ void HarmonicMapper::Equalize(int v1, int v2)
 	}
 
 	fixUniqueEdges();
+}
+
+bool HarmonicMapper::hasEdge(int v1, int v2) {
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		if (uniqueEdges[i].v1 == v1 && uniqueEdges[i].v2 == v2) {
+			return true;
+		}
+		if (uniqueEdges[i].v1 == v2 && uniqueEdges[i].v2 == v1) {
+			return true;
+		}
+	}
+	return false;
 }

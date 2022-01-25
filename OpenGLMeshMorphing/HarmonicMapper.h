@@ -36,7 +36,9 @@ public:
 	void fixIntersections();
 	bool fixIntersection();
 	void fixUniqueEdges();
+	void retriangulate();
 
 	void Equalize(int v1, int v2);
+	bool hasEdge(int v1, int v2);
 };
 
