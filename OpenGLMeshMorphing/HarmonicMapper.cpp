@@ -1,17 +1,19 @@
 #include "HarmonicMapper.h"
 #include <glm/gtx/string_cast.hpp>
 
-HarmonicMapper::HarmonicMapper(MeshData &source, MeshData &target)
+HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 {
 	this->source = &source;
 	this->target = &target;
 
 	map = std::map<int, MapEntity>();
+	finalMorphMap = std::map<int, MorphEntity>();
 	uniqueEdges = std::vector<UniqueEdgeData>();
 	border = std::vector<BorderEntity>();
 
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
 	firstExtraIndex = lastVertexIndex + 1;
+
 }
 
 bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection)
@@ -46,14 +48,44 @@ void HarmonicMapper::initMap()
 {
 	for (auto const& x : source->map)
 	{
-		map[x.first] = x.second;
+		int i = x.first;
+
+		map[i] = x.second;
+
+		MorphEntity e;
+		e.baseEqClass = i;
+		e.vertexType = VertexType::Source;
+		e.srcPos = source->vertices[i].vertex.position;
+
+		if (!x.second.border) {
+			e.tarPos = target->findVertexPos(x.second.image);
+		} else {
+			e.tarPos = target->findBorderPos(x.second.phi);
+		}
+
+		finalMorphMap[i] = e;
 	}
 
 	int vertexCount = source->getVertexCount();
 
 	for (auto const& x : target->map)
 	{
-		map[x.first + vertexCount] = x.second;
+		int i = x.first;
+
+		map[i + vertexCount] = x.second;
+
+		MorphEntity e;
+		e.baseEqClass = i;
+		e.vertexType = VertexType::Target;
+		e.tarPos = target->vertices[i].vertex.position;
+
+		if (!x.second.border) {
+			e.srcPos = source->findVertexPos(x.second.image);
+		} else {
+			e.srcPos = source->findBorderPos(x.second.phi);
+		}
+
+		finalMorphMap[i + vertexCount] = e;
 	}
 }
 
@@ -62,6 +94,9 @@ void HarmonicMapper::initEdges()
 	for (auto const& x : source->uniqueEdges)
 	{
 		UniqueEdgeData temp = x;
+		temp.type = VertexType::Source;
+		temp.baseEqClass1 = temp.v1;
+		temp.baseEqClass2 = temp.v2;
 		uniqueEdges.push_back(temp);
 	}
 
@@ -70,8 +105,11 @@ void HarmonicMapper::initEdges()
 	for (auto const& x : target->uniqueEdges)
 	{
 		UniqueEdgeData temp = x;
+		temp.baseEqClass1 = temp.v1;
+		temp.baseEqClass2 = temp.v2;
 		temp.v1 += vertexCount;
 		temp.v2 += vertexCount;
+		temp.type = VertexType::Target;
 		uniqueEdges.push_back(temp);
 	}
 }
@@ -88,20 +126,30 @@ void HarmonicMapper::fixMapBound()
 		BorderEntity e;
 		e.eqClass = x.v1;
 		e.phi = map[x.v1].phi;
+		e.type = finalMorphMap[x.v1].vertexType;
 
 		if (border.size() == 0) {
 			border.push_back(e);
 			continue;
 		}
 
-		if (e.phi <= border[0].phi) {
+		if (e.phi < border[0].phi) {
 			auto it = border.begin();
 			border.insert(it, e);
 			continue;
 		}
+		else if (e.phi == border[0].phi) {
+			Equalize(border[0].eqClass, e.eqClass);
+			continue;
+		}
 
-		if (e.phi >= border[border.size() - 1].phi) {
+		if (e.phi > border[border.size() - 1].phi) {
 			border.push_back(e);
+			continue;
+		}
+		else if (e.phi == border[border.size() - 1].phi) {
+			border[border.size() - 1].type = VertexType::Merged;
+			Equalize(border[border.size() - 1].eqClass, e.eqClass);
 			continue;
 		}
 
@@ -110,6 +158,10 @@ void HarmonicMapper::fixMapBound()
 			if (border[i].phi < e.phi && e.phi < border[i + 1].phi) {
 				border.insert(border.begin() + i + 1, e);
 				break;
+			}
+			else if (border[i].phi == e.phi) {
+				border[i].type = VertexType::Merged;
+				Equalize(border[i].eqClass, e.eqClass);
 			}
 		}
 	}
@@ -140,12 +192,17 @@ void HarmonicMapper::fixMapBound()
 
 		uniqueEdges.push_back(e);
 	}
+
+	std::cout << "Border length: " << border.size() << std::endl;
 }
 
 void HarmonicMapper::fixIntersections()
 {
 	fixUniqueEdges();
-	while (fixIntersection()) { }
+	std::cout << "looking for intersections..." << std::endl;
+	while (fixIntersection()) {}
+	std::cout << "intersections fixed!" << std::endl;
+	fixUniqueEdges();
 }
 
 bool HarmonicMapper::fixIntersection()
@@ -153,6 +210,7 @@ bool HarmonicMapper::fixIntersection()
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
 		if (uniqueEdges[i].v1 == -1) {
+			//std::cout << "this edge must be deleted" << std::endl;
 			continue;
 		}
 
@@ -175,6 +233,7 @@ bool HarmonicMapper::fixIntersection()
 			}
 
 			if (uniqueEdges[j].v1 == -1) {
+				//std::cout << "this edge must be deleted" << std::endl;
 				continue;
 			}
 
@@ -213,24 +272,28 @@ bool HarmonicMapper::fixIntersection()
 				e1.isBorder = uniqueEdges[i].isBorder;
 				e1.pos1 = uniqueEdges[i].pos1;
 				e1.pos2 = center1;
+				e1.type = uniqueEdges[i].type;
 
 				e2.v1 = centerIndex;
 				e2.v2 = b;
 				e2.isBorder = uniqueEdges[i].isBorder;
 				e2.pos1 = center1;
 				e2.pos2 = uniqueEdges[i].pos2;
+				e2.type = uniqueEdges[i].type;
 
 				e3.v1 = c;
 				e3.v2 = centerIndex;
 				e3.isBorder = uniqueEdges[j].isBorder;
 				e3.pos1 = uniqueEdges[j].pos1;
 				e3.pos2 = center2;
+				e3.type = uniqueEdges[j].type;
 
 				e4.v1 = centerIndex;
 				e4.v2 = d;
 				e4.isBorder = uniqueEdges[j].isBorder;
 				e4.pos1 = center2;
-				e1.pos2 = uniqueEdges[j].pos2;
+				e4.pos2 = uniqueEdges[j].pos2;
+				e4.type = uniqueEdges[j].type;
 
 				uniqueEdges[i].v1 = -1;
 				uniqueEdges[j].v1 = -1;
@@ -239,8 +302,6 @@ bool HarmonicMapper::fixIntersection()
 				uniqueEdges.push_back(e2);
 				uniqueEdges.push_back(e3);
 				uniqueEdges.push_back(e4);
-
-				fixUniqueEdges();
 				return true;
 			}
 		}
@@ -287,7 +348,7 @@ void HarmonicMapper::retriangulate()
 				continue;
 			}
 
-			std::cout << "unique edges amount = " << uniqueEdges.size() << std::endl;
+			//std::cout << "unique edges amount = " << uniqueEdges.size() << std::endl;
 			for (auto const& e : uniqueEdges)
 			{
 				glm::vec2 intersection;
@@ -336,4 +397,41 @@ bool HarmonicMapper::hasEdge(int v1, int v2) {
 		}
 	}
 	return false;
+}
+
+SuperMesh* HarmonicMapper::generateSuperMesh() {
+	SuperMesh* superMesh = (SuperMesh*)calloc(1, sizeof(superMesh));
+
+	std::vector <SuperVertex> vertices;
+	std::vector <GLuint> indices;
+
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		auto e1 = uniqueEdges[i];
+		for (size_t j = 0; j < uniqueEdges.size(); j++)
+		{
+			if (i == j) {
+				continue;
+			}
+
+			auto e2 = uniqueEdges[j];
+			for (size_t k = 0; k < uniqueEdges.size(); k++)
+			{
+				if (k == i || k == j) {
+					continue;
+				}
+
+				auto e3 = uniqueEdges[k];
+
+				if (e1.adjacent(e2) && e2.adjacent(e3) && e3.adjacent(e1)) {
+					SuperVertex v1;
+					//v1.position1 = e1.
+				}
+			}
+		}
+	}
+
+	*superMesh = SuperMesh(vertices, indices);
+
+	return superMesh;
 }

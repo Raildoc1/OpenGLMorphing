@@ -2,6 +2,8 @@
 #include "Mesh.h"
 #include <map>
 
+enum class VertexType { Source, Target, Extra, Merged };
+
 struct VertexData {
 	Vertex vertex;
 	int index;
@@ -13,6 +15,11 @@ struct MapEntity {
 	glm::vec2 image;
 	bool locked;
 	bool border;
+	float phi;
+};
+
+struct BorderVertex {
+	int eqClass;
 	float phi;
 };
 
@@ -57,11 +64,32 @@ struct UniqueEdgeData {
 	glm::vec3 pos1;
 	glm::vec3 pos2;
 
+	VertexType type;
+
+	int baseEqClass1;
+	int baseEqClass2;
+
 	bool isBorder;
 
 	bool equals(UniqueEdgeData& e) {
 		return (v1 == e.v1 && v2 == e.v2) 
 			|| (v1 == e.v2 && v2 == e.v1);
+	}
+
+	bool adjacent(UniqueEdgeData& e) {
+		if (this->equals(e)) {
+			return false;
+		}
+
+		if (v1 == e.v1 || v1 == e.v2) {
+			return true;
+		}
+
+		if (v2 == e.v1 || v2 == e.v2) {
+			return true;
+		}
+
+		return false;
 	}
 };
 
@@ -74,12 +102,14 @@ private:
 
 	int vertexCount;
 	int edgesCount;
+	int indicesCount;
 
 	float borderLength = 0.0f;
 	float lastEnergy = 0.0f;
 
 	std::vector<int> fixedIndices;
 	std::map<int, glm::vec2> derivatives;
+	std::vector<BorderVertex> borderVertices;
 
 	bool initialized = false;
 
@@ -100,9 +130,11 @@ public:
 	int getVertexCount() { return vertexCount; }
 	int getEdgesCount() { return edgesCount; }
 	float getBorderLength() { return borderLength; }
+	int getIndicesCount() { return indicesCount; }
 
 	VertexData* vertices;
 	EdgeData* edges;
+	int* triangles;
 
 	std::vector<EdgeData> border;
 	std::vector<UniqueEdgeData> uniqueEdges;
@@ -116,4 +148,6 @@ public:
 
 	float tickMap();
 	void harmonizeMap();
+	glm::vec3 findVertexPos(glm::vec2 mapPos);
+	glm::vec3 findBorderPos(float phi);
 };

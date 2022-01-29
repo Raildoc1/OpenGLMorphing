@@ -167,8 +167,6 @@ int main()
 		//std::cout << to_string(offset) << " : " << camera.mouseDeltaX << ", " << camera.mouseDeltaY << std::endl;
 		//sourceModel.Draw(shaderProgram, camera);
 
-		std::cout << "scale: " << w << std::endl;
-
 		glBindVertexArray(vao);
 		glUniform4f(glGetUniformLocation(debugShader.ID, "offset"), offset.x, offset.y, 0.0f, 0.0f);
 		glUniform1f(glGetUniformLocation(debugShader.ID, "scale"), w);

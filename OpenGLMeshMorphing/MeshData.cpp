@@ -9,6 +9,7 @@ MeshData::MeshData(Mesh& mesh)
 	vertices = (VertexData*)calloc(vertexCount, sizeof(VertexData));
 	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
 	k = (float**)calloc(vertexCount, sizeof(float*));
+	triangles = (int*)calloc(mesh.indices.size(), sizeof(int));
 
 	for (size_t i = 0; i < vertexCount; i++)
 	{
@@ -20,6 +21,7 @@ MeshData::MeshData(Mesh& mesh)
 	fixedIndices = std::vector<int>();
 	map = std::map<int, MapEntity>();
 	derivatives = std::map<int, glm::vec2>();
+	borderVertices = std::vector<BorderVertex>();
 }
 
 MeshData::~MeshData()
@@ -98,8 +100,10 @@ void MeshData::initVertices()
 
 void MeshData::initFixedIndices()
 {
-	for (size_t i = 0; i < mesh.indices.size(); i++)
+	indicesCount = mesh.indices.size();
+	for (size_t i = 0; i < indicesCount; i++)
 	{
+		triangles[i] = vertices[mesh.indices[i]].eqClass;
 		fixedIndices.push_back(vertices[mesh.indices[i]].eqClass);
 	}
 }
@@ -313,9 +317,17 @@ void MeshData::initMap()
 		currentLength += border[i].length;
 
 		map[border[i].v1.eqClass] = e;
+
+		BorderVertex v;
+		v.eqClass = border[i].v1.eqClass;
+		v.phi = t;
+
+		borderVertices.push_back(v);
+
+		std::cout << "phi = " << t << std::endl;
 	}
 
-	std::cout << "Border length: " << getBorderLength() << std::endl;
+	//std::cout << "Border length: " << getBorderLength() << std::endl;
 
 	for (size_t i = 0; i < getVertexCount(); i++)
 	{
@@ -335,7 +347,7 @@ void MeshData::initMap()
 		}
 
 		float t = dPi * eqClass / (float)vertexCount;
-		std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
+		//std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
 
 		MapEntity e;
 		//e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
@@ -344,7 +356,7 @@ void MeshData::initMap()
 		e.border = false;
 		e.phi = 0.0f;
 
-		std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
+		//std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
 
 		map[eqClass] = e;
 	}
@@ -414,7 +426,7 @@ void MeshData::harmonizeMap()
 		iterations++;
 		delta = tickMap();
 
-		std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
+		//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 
 		if (delta < 0.0f) {
 			delta = -delta;
@@ -422,5 +434,49 @@ void MeshData::harmonizeMap()
 
 	} while (iterations < MAX_ITER && delta > 0.01f);
 
-	std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
+	//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
+}
+
+glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
+	for (size_t i = 0; i < indicesCount; i += 3)
+	{
+		glm::vec2 p1 = map[triangles[i + 0]].image;
+		glm::vec2 p2 = map[triangles[i + 1]].image;
+		glm::vec2 p3 = map[triangles[i + 2]].image;
+
+		float area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
+
+		float s = 1 / (2 * area) * (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * mapPos.x + (p1.x - p3.x) * mapPos.y);
+		float t = 1 / (2 * area) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * mapPos.x + (p2.x - p1.x) * mapPos.y);
+
+		glm::vec3 v1 = vertices[triangles[i + 0]].vertex.position;
+		glm::vec3 v2 = vertices[triangles[i + 1]].vertex.position;
+		glm::vec3 v3 = vertices[triangles[i + 2]].vertex.position;
+
+		if (s > 0 && t > 0 && 1 - s - t > 0) {
+			return v1 + (v2 - v1) * s + (v3 - v1) * t;
+		}
+	}
+}
+
+glm::vec3 MeshData::findBorderPos(float phi) {
+	for (size_t i = 0; i < borderVertices.size(); i++)
+	{
+		int j = (i + 1) % borderVertices.size();
+
+		float phi1 = borderVertices[i].phi;
+		float phi2 = borderVertices[j].phi;
+
+		if (phi1 < phi && phi < phi2) {
+			float t = (phi - phi1) / (phi2 - phi1);
+			return vertices[borderVertices[i].eqClass].vertex.position * t +
+				vertices[borderVertices[j].eqClass].vertex.position * (1.0f - t);
+		} else if (borderVertices[i].phi == phi) {
+			return vertices[borderVertices[i].eqClass].vertex.position;
+		}
+	}
+
+	std::cout << "border position isn't found :c" << std::endl;
+
+	return glm::vec3();
 }

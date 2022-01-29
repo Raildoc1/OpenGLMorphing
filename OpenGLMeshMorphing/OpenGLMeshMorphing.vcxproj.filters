@@ -60,6 +60,15 @@
     <ClCompile Include="HarmonicMapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SuperMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuperVBO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuperVAO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h">
@@ -92,6 +101,15 @@
     <ClInclude Include="HarmonicMapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SuperMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SuperVBO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SuperVAO.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="default.vert">
@@ -104,6 +122,12 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="dot.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="super.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="super.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

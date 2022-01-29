@@ -1,11 +1,21 @@
 #pragma once
 #include "MeshData.h"
+#include "SuperMesh.h"
 #include <map>
 
 struct BorderEntity
 {
 	int eqClass;
 	float phi;
+	VertexType type;
+};
+
+struct MorphEntity
+{
+	VertexType vertexType;
+	int baseEqClass;
+	glm::vec3 srcPos;
+	glm::vec3 tarPos;
 };
 
 class HarmonicMapper
@@ -22,6 +32,7 @@ private:
 
 public:
 	std::map<int, MapEntity> map;
+	std::map<int, MorphEntity> finalMorphMap;
 	std::vector<UniqueEdgeData> uniqueEdges;
 	std::vector<BorderEntity> border;
 
@@ -40,5 +51,7 @@ public:
 
 	void Equalize(int v1, int v2);
 	bool hasEdge(int v1, int v2);
+
+	SuperMesh* generateSuperMesh();
 };
 
