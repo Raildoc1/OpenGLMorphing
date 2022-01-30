@@ -15,7 +15,7 @@ SuperMesh::SuperMesh(std::vector <SuperVertex>& vertices, std::vector <GLuint>& 
 	VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(SuperVertex), (void*)0);
 	VAO.LinkAttrib(VBO, 1, 3, GL_FLOAT, sizeof(SuperVertex), (void*)(3 * sizeof(float)));
 	VAO.LinkAttrib(VBO, 2, 3, GL_FLOAT, sizeof(SuperVertex), (void*)(6 * sizeof(float)));
-	VAO.LinkAttrib(VBO, 3, 2, GL_FLOAT, sizeof(SuperVertex), (void*)(9 * sizeof(float)));
+	VAO.LinkAttrib(VBO, 3, 3, GL_FLOAT, sizeof(SuperVertex), (void*)(9 * sizeof(float)));
 	// Unbind all to prevent accidentally modifying them
 	VAO.Unbind();
 	VBO.Unbind();

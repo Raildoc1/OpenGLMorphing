@@ -267,6 +267,39 @@ bool HarmonicMapper::fixIntersection()
 				glm::vec3 center1 = (uniqueEdges[i].pos1 + uniqueEdges[i].pos2) / 2.0f;
 				glm::vec3 center2 = (uniqueEdges[j].pos1 + uniqueEdges[j].pos2) / 2.0f;
 
+				glm::vec3 aPos;
+				glm::vec3 bPos;
+				glm::vec3 cPos;
+				glm::vec3 dPos;
+
+				float t1 = glm::distance(intersection, map[a].image) / glm::distance(map[b].image, map[a].image);
+				float t2 = glm::distance(intersection, map[c].image) / glm::distance(map[d].image, map[c].image);
+
+				MorphEntity me;
+				me.baseEqClass = centerIndex;
+				me.vertexType = VertexType::Merged;
+
+				if (uniqueEdges[i].type == VertexType::Source) {
+					aPos = finalMorphMap[a].srcPos;
+					bPos = finalMorphMap[b].srcPos;
+					cPos = finalMorphMap[c].tarPos;
+					dPos = finalMorphMap[d].tarPos;
+
+					me.srcPos = aPos * (1.0f - t1) + bPos * t1;
+					me.tarPos = cPos * (1.0f - t1) + dPos * t1;
+
+				} else {
+					aPos = finalMorphMap[a].tarPos;
+					bPos = finalMorphMap[b].tarPos;
+					cPos = finalMorphMap[c].srcPos;
+					dPos = finalMorphMap[d].srcPos;
+
+					me.tarPos = aPos * (1.0f - t1) + bPos * t1;
+					me.srcPos = cPos * (1.0f - t1) + dPos * t1;
+				}
+
+				finalMorphMap[centerIndex] = me;
+
 				e1.v1 = a;
 				e1.v2 = centerIndex;
 				e1.isBorder = uniqueEdges[i].isBorder;
@@ -400,22 +433,23 @@ bool HarmonicMapper::hasEdge(int v1, int v2) {
 }
 
 SuperMesh* HarmonicMapper::generateSuperMesh() {
-	SuperMesh* superMesh = (SuperMesh*)calloc(1, sizeof(superMesh));
 
-	std::vector <SuperVertex> vertices;
-	std::vector <GLuint> indices;
+	std::cout << "generating super mesh..." << std::endl;
+	std::vector <SuperVertex> * vertices = new std::vector <SuperVertex>();
+	std::vector <GLuint> * indices = new std::vector <GLuint>();
+	std::cout << "vectors created successfully!" << std::endl;
 
-	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
 	{
 		auto e1 = uniqueEdges[i];
-		for (size_t j = 0; j < uniqueEdges.size(); j++)
+		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
 			if (i == j) {
 				continue;
 			}
 
 			auto e2 = uniqueEdges[j];
-			for (size_t k = 0; k < uniqueEdges.size(); k++)
+			for (size_t k = j + 1; k < uniqueEdges.size(); k++)
 			{
 				if (k == i || k == j) {
 					continue;
@@ -425,13 +459,52 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 
 				if (e1.adjacent(e2) && e2.adjacent(e3) && e3.adjacent(e1)) {
 					SuperVertex v1;
-					//v1.position1 = e1.
+					//std::cout << "finalMorphMap[" << e1.v1 << "]" << std::endl;
+					v1.position1 = finalMorphMap[e1.v1].srcPos;
+					v1.position2 = finalMorphMap[e1.v1].tarPos;
+					v1.normal1 = glm::normalize(finalMorphMap[e1.v1].srcPos);
+					v1.normal2 = glm::normalize(finalMorphMap[e1.v1].srcPos);
+
+					SuperVertex v2;
+					//std::cout << "finalMorphMap[" << e1.v2 << "]" << std::endl;
+					v2.position1 = finalMorphMap[e1.v2].srcPos;
+					v2.position2 = finalMorphMap[e1.v2].tarPos;
+					v2.normal1 = glm::normalize(finalMorphMap[e1.v2].srcPos);
+					v2.normal2 = glm::normalize(finalMorphMap[e1.v2].tarPos);
+
+					SuperVertex v3;
+					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
+						//std::cout << "finalMorphMap[" << e3.v1 << "]" << std::endl;
+						v3.position1 = finalMorphMap[e3.v1].srcPos;
+						v3.position2 = finalMorphMap[e3.v1].tarPos;
+						v3.normal1 = glm::normalize(finalMorphMap[e3.v1].srcPos);
+						v3.normal2 = glm::normalize(finalMorphMap[e3.v1].tarPos);
+					} else {
+						//std::cout << "finalMorphMap[" << e3.v2 << "]" << std::endl;
+						v3.position1 = finalMorphMap[e3.v2].srcPos;
+						v3.position2 = finalMorphMap[e3.v2].tarPos;
+						v3.normal1 = glm::normalize(finalMorphMap[e3.v2].srcPos);
+						v3.normal2 = glm::normalize(finalMorphMap[e3.v2].tarPos);
+					}
+					vertices->push_back(v1);
+					indices->push_back(vertices->size() - 1);
+					vertices->push_back(v2);
+					indices->push_back(vertices->size() - 1);
+					vertices->push_back(v3);
+					indices->push_back(vertices->size() - 1);
+					//std::cout << "break" << std::endl;
+					break;
 				}
 			}
 		}
 	}
 
-	*superMesh = SuperMesh(vertices, indices);
+	std::cout << "Super mesh vertices amount = " << vertices->size() << std::endl;
+	std::cout << "Super mesh indices amount = " << indices->size() << std::endl;
+
+	SuperMesh* superMesh = new SuperMesh(*vertices, *indices);
+
+	std::cout << "Super mesh generated successfully!" << std::endl;
 
 	return superMesh;
 }

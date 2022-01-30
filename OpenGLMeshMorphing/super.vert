@@ -13,6 +13,7 @@ uniform mat4 model;
 uniform mat4 translation;
 uniform mat4 rotation;
 uniform mat4 scale;
+uniform float t;
 
 void main()
 {
@@ -20,8 +21,7 @@ void main()
 	vec3 intNorm = t * tarNorm + (1.0f - t) * srcNorm;
 
 	crntPos = vec3(model * translation * -rotation * scale * vec4(intPos, 1.0f));
-	Normal = intNorm;
-	color = vec3(1.0f, 1.0f, 1.0f);
+	crntNormal = intNorm;
 
 	gl_Position = camMatrix * vec4(crntPos, 1.0);
 }

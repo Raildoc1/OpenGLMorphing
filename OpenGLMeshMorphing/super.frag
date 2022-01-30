@@ -13,10 +13,11 @@ vec4 direcLight()
 {
 	float ambient = 0.20f;
 
-	vec3 normal = normalize(Normal);
+	vec3 normal = normalize(crntNormal);
 	vec3 lightDirection = normalize(vec3(-3.0f, -5.0f, -2.0f));
 	float diffuse = max(dot(normal, lightDirection), 0.0f);
-
+	
+	//return vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	return vec4(diffuse + ambient) * lightColor;
 }
 
