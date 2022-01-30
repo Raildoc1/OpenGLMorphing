@@ -38,7 +38,7 @@ public:
 
 	HarmonicMapper(MeshData &source, MeshData &target);
 
-	static bool TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection);
+	static bool TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively);
 
 	void init();
 	void initMap();
@@ -48,6 +48,7 @@ public:
 	bool fixIntersection();
 	void fixUniqueEdges();
 	void retriangulate();
+	void clearMap();
 
 	void Equalize(int v1, int v2);
 	bool hasEdge(int v1, int v2);

@@ -194,6 +194,7 @@
     <None Include="dot.frag" />
     <None Include="dot.vert" />
     <None Include="super.frag" />
+    <None Include="super.geom" />
     <None Include="super.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -130,5 +130,8 @@
     <None Include="super.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="super.geom">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

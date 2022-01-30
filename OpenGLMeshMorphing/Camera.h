@@ -28,6 +28,8 @@ public:
 
 	float scale = 1.0f;
 
+	float t = 0.0f;
+	
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 

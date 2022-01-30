@@ -91,6 +91,38 @@ struct UniqueEdgeData {
 
 		return false;
 	}
+
+	bool isTriangle(UniqueEdgeData& e1, UniqueEdgeData& e2) {
+		if (v1 == e1.v1) {
+			if (e2.v1 == e1.v2 && e2.v2 == v2) {
+				return true;
+			} else if (e2.v1 == v2 && e2.v2 == e1.v2) {
+				return true;
+			}
+		} else if (v1 == e1.v2) {
+			if (e2.v1 == e1.v1 && e2.v2 == v2) {
+				return true;
+			} else if (e2.v1 == v2 && e2.v2 == e1.v1) {
+				return true;
+			}
+		}
+
+		if (v1 == e2.v1) {
+			if (e1.v1 == e2.v2 && e1.v2 == v2) {
+				return true;
+			} else if (e1.v1 == v2 && e1.v2 == e2.v2) {
+				return true;
+			}
+		} else if (v1 == e2.v2) {
+			if (e1.v1 == e2.v1 && e1.v2 == v2) {
+				return true;
+			} else if (e1.v1 == v2 && e1.v2 == e2.v1) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 };
 
 class MeshData {

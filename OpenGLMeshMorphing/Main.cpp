@@ -9,6 +9,7 @@ namespace fs = std::filesystem;
 #include "HarmonicMapper.h"
 #include <glm/gtx/string_cast.hpp>
 
+enum class ViewMode { Super, Map };
 
 const unsigned int width = 1000;
 const unsigned int height = 1000;
@@ -22,6 +23,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 int main()
 {
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -40,7 +42,7 @@ int main()
 	gladLoadGL();
 	glViewport(0, 0, width, height);
 
-	Shader shaderProgram("default.vert", "default.frag");
+	Shader shaderProgram("default.vert", "default.frag", false);
 
 	glm::vec4 lightColor = glm::vec4(0.43f, 0.91f, 0.85f, 1.0f);
 	glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, -5.0f);
@@ -57,8 +59,8 @@ int main()
 
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 
-	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
-	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+	std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
+	std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
@@ -72,7 +74,7 @@ int main()
 	sourceData.harmonizeMap();
 	targetData.harmonizeMap();
 
-	Shader debugShader("dot.vert", "dot.frag");
+	Shader debugShader("dot.vert", "dot.frag", false);
 	debugShader.Activate();
 
 	/*for (size_t i = 0; i < data.getVertexCount(); i++)
@@ -152,22 +154,23 @@ int main()
 	glfwSetScrollCallback(window, scroll_callback);
 
 	// Super Mesh
-	std::cout << "initializing super shader..." << std::endl;
-	Shader superShader("super.vert", "super.frag");
-	std::cout << "super shader initialized successfully!" << std::endl;
-	std::cout << "activating super shader..." << std::endl;
-	superShader.Activate();
-	std::cout << "super shader activated successfully!" << std::endl;
 
-	SuperMesh* superMesh = mapper.generateSuperMesh();
+	ViewMode mode = ViewMode::Super;
 
-	std::cout << "Super mesh vertices amount = " << superMesh->vertices.size() << std::endl;
-	std::cout << "Super mesh indices amount = " << superMesh->indices.size() << std::endl;
+	Shader superShader("super.vert", "super.frag", true);
+	SuperMesh* superMesh = mapper.generateSuperMesh();;
 
-	glUniform4f(glGetUniformLocation(superShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	if (mode == ViewMode::Super) {
+		superShader.Activate();
 
-	glEnable(GL_DEPTH_TEST);
+		std::cout << "Super mesh vertices amount = " << superMesh->vertices.size() << std::endl;
+		std::cout << "Super mesh indices amount = " << superMesh->indices.size() << std::endl;
+
+		glUniform4f(glGetUniformLocation(superShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+		glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -178,22 +181,25 @@ int main()
 		camera.Inputs(window);
 		camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
-		//float w = glm::exp(-scale);
-		//offset.x += camera.mouseDeltaX * 0.001f * (1.0f / w);
-		//offset.y -= camera.mouseDeltaY * 0.001f * (1.0f / w);
-
 		//std::cout << to_string(offset) << " : " << camera.mouseDeltaX << ", " << camera.mouseDeltaY << std::endl;
 		//sourceModel.Draw(shaderProgram, camera);
 
-		/*glBindVertexArray(vao);
-		glUniform4f(glGetUniformLocation(debugShader.ID, "offset"), offset.x, offset.y, 0.0f, 0.0f);
-		glUniform1f(glGetUniformLocation(debugShader.ID, "scale"), w);
-		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 1.0f, 1.0f, 1.0f);
-		glDrawArrays(GL_LINES, 0, totalEdgesAmount * 2);
-		glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 0.0f, 0.0f, 1.0f);
-		glDrawArrays(GL_POINTS, 0, totalEdgesAmount * 2);*/
-		glUniform1f(glGetUniformLocation(superShader.ID, "t"), 0.0f);
-		(*superMesh).Draw(superShader, camera);
+		if (mode == ViewMode::Map) {
+			float w = glm::exp(-scale);
+			offset.x += camera.mouseDeltaX * 0.001f * (1.0f / w);
+			offset.y -= camera.mouseDeltaY * 0.001f * (1.0f / w);
+
+			glBindVertexArray(vao);
+			glUniform4f(glGetUniformLocation(debugShader.ID, "offset"), offset.x, offset.y, 0.0f, 0.0f);
+			glUniform1f(glGetUniformLocation(debugShader.ID, "scale"), w);
+			glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 1.0f, 1.0f, 1.0f);
+			glDrawArrays(GL_LINES, 0, totalEdgesAmount * 2);
+			glUniform4f(glGetUniformLocation(debugShader.ID, "baseColor"), 1.0f, 0.0f, 0.0f, 1.0f);
+			glDrawArrays(GL_POINTS, 0, totalEdgesAmount * 2);
+		} else if (mode == ViewMode::Super) {
+			glUniform1f(glGetUniformLocation(superShader.ID, "t"), camera.t);
+			(*superMesh).Draw(superShader, camera);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
