@@ -59,8 +59,10 @@ int main()
 
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 
-	std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
-	std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
+	/*std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
+	std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";*/
+	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
+	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
