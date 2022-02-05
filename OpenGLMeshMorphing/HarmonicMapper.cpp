@@ -210,7 +210,11 @@ void HarmonicMapper::fixIntersections()
 	fixUniqueEdges();
 	std::cout << "looking for intersections..." << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
-	while (fixIntersection()) {}
+	int maxItntersections = 50;
+	while (fixIntersection() && (maxItntersections > 0)) {
+		std::cout << maxItntersections << std::endl;
+		maxItntersections--;
+	}
 	fixUniqueEdges();
 	std::cout << "intersections fixed!" << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
@@ -380,11 +384,11 @@ void HarmonicMapper::fixUniqueEdges()
 
 void HarmonicMapper::retriangulate()
 {
-	std::cout << "before:" << std::endl;
+	/*std::cout << "before:" << std::endl;
 	for (auto const& e : uniqueEdges)
 	{
 		std::cout << "(" << e.v1 << "," << e.v2 << ")" << std::endl;
-	}
+	}*/
 
 	for (auto const& x : map)
 	{
@@ -402,15 +406,15 @@ void HarmonicMapper::retriangulate()
 			for (auto const& e : uniqueEdges)
 			{
 				glm::vec2 intersection;
-				if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
+				/*if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
 					std::cout << "-----------------------------" << std::endl;
-				}
+				}*/
 				if (TryFindIntersection(x.second.image, y.second.image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
 					goto out;
 				}
-				if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
+				/*if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
 					std::cout << "-----------------------------" << std::endl;
-				}
+				}*/
 			}
 
 			UniqueEdgeData e;
@@ -426,16 +430,16 @@ void HarmonicMapper::retriangulate()
 		}
 	}
 
-	std::cout << "new:" << std::endl;
+	/*std::cout << "new:" << std::endl;
 	for (auto const& e : uniqueEdges)
 	{
 		std::cout << "(" << e.v1 << "," << e.v2 << ")" << std::endl;
-	}
+	}*/
 }
 
 void HarmonicMapper::clearMap()
 {
-	std::cout << "map size before = " << map.size() << std::endl;
+	//std::cout << "map size before = " << map.size() << std::endl;
 	for (auto it = map.begin(); it != map.end();)
 	{
 		bool found = false;
@@ -453,11 +457,11 @@ void HarmonicMapper::clearMap()
 			continue;
 		}
 
-		std::cout << it->first << " -> " << to_string(it->second.image) << std::endl;
+		//std::cout << it->first << " -> " << to_string(it->second.image) << std::endl;
 
 		it++;
 	}
-	std::cout << "map size after = " << map.size() << std::endl;
+	//std::cout << "map size after = " << map.size() << std::endl;
 }
 
 void HarmonicMapper::Equalize(int v1, int v2)
@@ -514,20 +518,20 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 				auto e3 = uniqueEdges[k];
 
 				if (e1.isTriangle(e2, e3)) {
-					std::cout << "triangle:" << std::endl;
-					std::cout << e1.v1 << "," << e1.v2 << std::endl;
-					std::cout << e2.v1 << "," << e2.v2 << std::endl;
-					std::cout << e3.v1 << "," << e3.v2 << std::endl;
+					//std::cout << "triangle:" << std::endl;
+					//std::cout << e1.v1 << "," << e1.v2 << std::endl;
+					//std::cout << e2.v1 << "," << e2.v2 << std::endl;
+					//std::cout << e3.v1 << "," << e3.v2 << std::endl;
 
 					SuperVertex v1;
-					std::cout << "finalMorphMap[" << e1.v1 << "]" << std::endl;
+					//std::cout << "finalMorphMap[" << e1.v1 << "]" << std::endl;
 					v1.position1 = finalMorphMap[e1.v1].srcPos;
 					v1.position2 = finalMorphMap[e1.v1].tarPos;
 					v1.normal1 = glm::normalize(finalMorphMap[e1.v1].srcPos);
 					v1.normal2 = glm::normalize(finalMorphMap[e1.v1].srcPos);
 
 					SuperVertex v2;
-					std::cout << "finalMorphMap[" << e1.v2 << "]" << std::endl;
+					//std::cout << "finalMorphMap[" << e1.v2 << "]" << std::endl;
 					v2.position1 = finalMorphMap[e1.v2].srcPos;
 					v2.position2 = finalMorphMap[e1.v2].tarPos;
 					v2.normal1 = glm::normalize(finalMorphMap[e1.v2].srcPos);
@@ -535,13 +539,13 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 
 					SuperVertex v3;
 					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
-						std::cout << "finalMorphMap[" << e3.v1 << "]" << std::endl;
+						//std::cout << "finalMorphMap[" << e3.v1 << "]" << std::endl;
 						v3.position1 = finalMorphMap[e3.v1].srcPos;
 						v3.position2 = finalMorphMap[e3.v1].tarPos;
 						v3.normal1 = glm::normalize(finalMorphMap[e3.v1].srcPos);
 						v3.normal2 = glm::normalize(finalMorphMap[e3.v1].tarPos);
 					} else {
-						std::cout << "finalMorphMap[" << e3.v2 << "]" << std::endl;
+						//std::cout << "finalMorphMap[" << e3.v2 << "]" << std::endl;
 						v3.position1 = finalMorphMap[e3.v2].srcPos;
 						v3.position2 = finalMorphMap[e3.v2].tarPos;
 						v3.normal1 = glm::normalize(finalMorphMap[e3.v2].srcPos);
@@ -553,7 +557,7 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 					indices->push_back(vertices->size() - 1);
 					vertices->push_back(v3);
 					indices->push_back(vertices->size() - 1);
-					std::cout << "break" << std::endl;
+					//std::cout << "break" << std::endl;
 					break;
 				}
 			}
@@ -561,10 +565,10 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 	}
 
 	std::cout << "Super mesh vertices amount = " << vertices->size() << std::endl;
-	for (auto const& v : *vertices)
+	/*for (auto const& v : *vertices)
 	{
 		std::cout << to_string(v.position1) << std::endl;
-	}
+	}*/
 
 	std::cout << "Super mesh indices amount = " << indices->size() << std::endl;
 

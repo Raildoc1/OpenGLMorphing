@@ -59,10 +59,14 @@ int main()
 
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
 
-	/*std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
-	std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";*/
-	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
-	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+	//std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
+	//std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
+	std::string sourceModelPath = "/Resources/models/pyramide3/pyramide3.gltf";
+	std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
+	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
+	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
@@ -84,7 +88,7 @@ int main()
 		std::cout << data.vertices[i].index << glm::to_string(data.vertices[i].vertex.position) << " -> " << data.vertices[i].eqClass << std::endl;
 	}*/
 
-	std::cout << "size = " << sourceData.uniqueEdges.size() << std::endl;
+	/*std::cout << "size = " << sourceData.uniqueEdges.size() << std::endl;
 
 	for (size_t i = 0; i < sourceData.uniqueEdges.size(); i++)
 	{
@@ -96,7 +100,7 @@ int main()
 	for (size_t i = 0; i < sourceData.border.size(); i++)
 	{
 		std::cout << "(" << sourceData.border[i].v1.eqClass << ", " << sourceData.border[i].v2.eqClass << ")" << std::endl;
-	}
+	}*/
 
 	HarmonicMapper mapper(sourceData, targetData);
 	mapper.init();
@@ -157,7 +161,7 @@ int main()
 
 	// Super Mesh
 
-	ViewMode mode = ViewMode::Super;
+	ViewMode mode = ViewMode::Map;
 
 	Shader superShader("super.vert", "super.frag", true);
 	SuperMesh* superMesh = mapper.generateSuperMesh();;

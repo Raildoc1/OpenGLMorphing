@@ -1,6 +1,7 @@
 #include "VBO.h"
 #include "Mesh.h"
 #include <map>
+#include <set>
 
 enum class VertexType { Source, Target, Extra, Merged };
 
@@ -8,6 +9,7 @@ struct VertexData {
 	Vertex vertex;
 	int index;
 	int eqClass;
+	int setIndex;
 	bool isBorder;
 };
 
@@ -128,7 +130,7 @@ struct UniqueEdgeData {
 class MeshData {
 private:
 	const float EPSILON = 0.001f;
-	const int MAX_ITER = 10000;
+	const int MAX_ITER = 25000;
 
 	Mesh mesh;
 
@@ -142,6 +144,12 @@ private:
 	std::vector<int> fixedIndices;
 	std::map<int, glm::vec2> derivatives;
 	std::vector<BorderVertex> borderVertices;
+	std::set<int> eqClassesSet;
+
+	float** A;
+	float* U;
+	float* V;
+	int looseVerteicesAmount;
 
 	bool initialized = false;
 
@@ -152,6 +160,7 @@ private:
 	void sortBorder();
 	void initUniqueEdges();
 	void initHarmonicK();
+	void initLambda();
 	void initMap();
 
 	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
@@ -171,8 +180,10 @@ public:
 	std::vector<EdgeData> border;
 	std::vector<UniqueEdgeData> uniqueEdges;
 	std::map<int, MapEntity> map;
+	std::vector<int> vertexSetList;
 
 	float** k;
+	float** lambda;
 
 	MeshData(Mesh& mesh);
 	~MeshData();

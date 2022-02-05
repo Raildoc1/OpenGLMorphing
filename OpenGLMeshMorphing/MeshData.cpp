@@ -1,4 +1,5 @@
 #include "MeshData.h"
+#include <filesystem>
 
 MeshData::MeshData(Mesh& mesh)
 {
@@ -9,11 +10,13 @@ MeshData::MeshData(Mesh& mesh)
 	vertices = (VertexData*)calloc(vertexCount, sizeof(VertexData));
 	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
 	k = (float**)calloc(vertexCount, sizeof(float*));
+	lambda = (float**)calloc(vertexCount, sizeof(float*));
 	triangles = (int*)calloc(mesh.indices.size(), sizeof(int));
 
 	for (size_t i = 0; i < vertexCount; i++)
 	{
 		k[i] = (float*)calloc(vertexCount, sizeof(float));
+		lambda[i] = (float*)calloc(vertexCount, sizeof(float));
 	}
 
 	border = std::vector<EdgeData>();
@@ -22,6 +25,7 @@ MeshData::MeshData(Mesh& mesh)
 	map = std::map<int, MapEntity>();
 	derivatives = std::map<int, glm::vec2>();
 	borderVertices = std::vector<BorderVertex>();
+	eqClassesSet = std::set<int>();
 }
 
 MeshData::~MeshData()
@@ -44,6 +48,7 @@ void MeshData::init()
 	initBorder();
 	initUniqueEdges();
 	initHarmonicK();
+	initLambda();
 	initMap();
 	lastEnergy = calculateMapEnergy();
 
@@ -90,12 +95,30 @@ void MeshData::initVertices()
 		{
 			if (glm::distance2(mesh.vertices[i].position, mesh.vertices[j].position) < EPSILON) {
 				data.eqClass = j;
+				eqClassesSet.insert(j);
 				break;
 			}
 		}
 
 		vertices[i] = data;
 	}
+
+	std::vector<int> v;
+	v.reserve(eqClassesSet.size());
+	std::copy(eqClassesSet.begin(), eqClassesSet.end(), std::back_inserter(v));
+
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		for (size_t j = 0; j < v.size(); j++)
+		{
+			if (vertices[i].eqClass == v[j]) {
+				vertices[i].setIndex = j;
+				break;
+			}
+		}
+	}
+
+	std::cout << "set size = " << eqClassesSet.size() << std::endl;
 }
 
 void MeshData::initFixedIndices()
@@ -135,6 +158,8 @@ void MeshData::initBorder()
 			border.push_back(edges[i]);
 			vertices[edges[i].v1.eqClass].isBorder = true;
 			vertices[edges[i].v2.eqClass].isBorder = true;
+			eqClassesSet.erase(edges[i].v1.eqClass);
+			eqClassesSet.erase(edges[i].v2.eqClass);
 		}
 	}
 	sortBorder();
@@ -145,6 +170,25 @@ void MeshData::initBorder()
 	{
 		borderLength += border[i].length;
 	}
+
+	vertexSetList.reserve(eqClassesSet.size());
+	std::copy(eqClassesSet.begin(), eqClassesSet.end(), std::back_inserter(vertexSetList));
+
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		vertices[i].setIndex = -1;
+		for (size_t j = 0; j < vertexSetList.size(); j++)
+		{
+			if (vertices[i].eqClass == vertexSetList[j]) {
+				vertices[i].setIndex = j;
+				break;
+			}
+		}
+	}
+
+	looseVerteicesAmount = eqClassesSet.size();
+
+	std::cout << "loose verteices amount = " << looseVerteicesAmount << std::endl;
 }
 
 void MeshData::sortBorder()
@@ -241,7 +285,7 @@ void MeshData::initHarmonicK()
 		glm::vec3 vi = uniqueEdges[i].pos1;
 		glm::vec3 vj = uniqueEdges[i].pos2;
 
-		std::cout << "vertices[" << k1 << "].vertex.position = " << "(" << vk1.x << ", " << vk1.y << ")" << std::endl;
+		//std::cout << "vertices[" << k1 << "].vertex.position = " << "(" << vk1.x << ", " << vk1.y << ")" << std::endl;
 
 		float lik1 = glm::distance2(vi, vk1);
 		float ljk1 = glm::distance2(vj, vk1);
@@ -257,8 +301,8 @@ void MeshData::initHarmonicK()
 		float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
 		float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
 
-		std::cout << "lik1 = (" << vi.x <<  ", " << vi.y << ") to (" << vk1.x << ", " << vk1.y << ") = " << lik1 << "; ljk1 = " << ljk1 << "; lik2 = " << lik2 << "; ljk2 = " << ljk2 << "; lji = " << lji << std::endl;
-		std::cout << "Aijk1 = " << Aijk1 << "; Aijk2 = " << Aijk2 << std::endl;
+		//std::cout << "lik1 = (" << vi.x <<  ", " << vi.y << ") to (" << vk1.x << ", " << vk1.y << ") = " << lik1 << "; ljk1 = " << ljk1 << "; lik2 = " << lik2 << "; ljk2 = " << ljk2 << "; lji = " << lji << std::endl;
+		//std::cout << "Aijk1 = " << Aijk1 << "; Aijk2 = " << Aijk2 << std::endl;
 
 		k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = ((lik1 + ljk1 - lji) / Aijk1) + ((lik2 + ljk2 - lji) / Aijk2);
 	}
@@ -272,7 +316,42 @@ void MeshData::initHarmonicK()
 			}
 
 			k[i][j] = k[vertices[i].eqClass][vertices[j].eqClass];
+			std::cout << std::setw(6) << std::setprecision(2) << k[i][j] << " ";
 		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+void MeshData::initLambda()
+{
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		int i0 = uniqueEdges[i].v1;
+		int i1 = uniqueEdges[i].v2;
+
+		for (size_t i = 0; i < vertexCount; i++)
+		{
+			lambda[i0][i] += k[i0][i1];
+			lambda[i1][i] += k[i0][i1];
+			lambda[i][i0] += k[i0][i1];
+			lambda[i][i1] += k[i0][i1];
+		}
+	}
+
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		for (size_t j = 0; j < vertexCount; j++)
+		{
+			if (lambda[i][j] == 0.0f) {
+				std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
+				continue;
+			}
+
+			lambda[i][j] = k[i][j] / lambda[i][j];
+			std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
+		}
+		std::cout << std::endl;
 	}
 }
 
@@ -298,6 +377,10 @@ int MeshData::edgeInTriangle(int e1, int e2, int t1, int t2, int t3)
 
 void MeshData::initMap()
 {
+	A = (float**)calloc(looseVerteicesAmount, sizeof(float*));
+	U = (float*)calloc(looseVerteicesAmount, sizeof(float));
+	V = (float*)calloc(looseVerteicesAmount, sizeof(float));
+
 	std::cout << "Border vertices:" << std::endl;
 
 	float currentLength = 0.0f;
@@ -326,6 +409,68 @@ void MeshData::initMap()
 
 		std::cout << "phi = " << t << std::endl;
 	}
+
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		A[i] = (float*)calloc(looseVerteicesAmount, sizeof(float));
+	}
+
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		A[i][i] = 1.0f;
+	}
+
+	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	{
+		int i0 = uniqueEdges[i].v1;
+		int i1 = uniqueEdges[i].v2;
+
+		VertexData v1 = vertices[i0];
+		VertexData v2 = vertices[i1];
+
+		if (v1.isBorder && v2.isBorder) {
+			continue;
+		}
+
+		if (v1.isBorder && !v2.isBorder) {
+			U[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * map[v1.eqClass].image.x;
+			V[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * map[v1.eqClass].image.y;
+		}
+		else if (!v1.isBorder && v2.isBorder) {
+			U[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * map[v2.eqClass].image.x;
+			V[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * map[v2.eqClass].image.y;
+		}
+		else {
+			A[v1.setIndex][v2.setIndex] = -lambda[v1.eqClass][v2.eqClass];
+			A[v2.setIndex][v1.setIndex] = -lambda[v2.eqClass][v1.eqClass];
+		}
+	}
+
+	std::cout << "U: ";
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		std::cout << U[i] << " ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "V: ";
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		std::cout << V[i] << " ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "A: " << std::endl;
+
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		for (size_t j = 0; j < looseVerteicesAmount; j++)
+		{
+			std::cout << A[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
 
 	//std::cout << "Border length: " << getBorderLength() << std::endl;
 
@@ -411,14 +556,18 @@ float MeshData::tickMap()
 			continue;
 		}
 
-		map[x.first].image -= 0.001f * derivatives[x.first];
+		map[x.first].image -= 0.05f * derivatives[x.first];
 	}
+
+	std::cout << energy << std::endl;
 
 	return energyDelta;
 }
 
 void MeshData::harmonizeMap()
 {
+	std::cout << "harmonizeMap" << std::endl;
+
 	int iterations = 0;
 	float delta;
 	do
@@ -432,7 +581,7 @@ void MeshData::harmonizeMap()
 			delta = -delta;
 		}
 
-	} while (iterations < MAX_ITER && delta > 0.01f);
+	} while (iterations < MAX_ITER && delta > 0.001f);
 
 	//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 }
