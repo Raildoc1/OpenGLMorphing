@@ -378,6 +378,7 @@ void MeshData::initHarmonicK()
 			}
 
 			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
+			//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
 		}
 
 

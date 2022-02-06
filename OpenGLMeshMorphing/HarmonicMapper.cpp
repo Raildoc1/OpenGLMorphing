@@ -68,6 +68,7 @@ void HarmonicMapper::initMap()
 
 		if (!x.second.border) {
 			e.tarPos = target->findVertexPos(x.second.image);
+			//e.tarPos = glm::vec3(0.0f);
 		} else {
 			e.tarPos = target->findBorderPos(x.second.phi);
 		}
@@ -90,6 +91,7 @@ void HarmonicMapper::initMap()
 
 		if (!x.second.border) {
 			e.srcPos = source->findVertexPos(x.second.image);
+			//e.srcPos = glm::vec3(0.0f);
 		} else {
 			e.srcPos = source->findBorderPos(x.second.phi);
 		}
@@ -210,10 +212,10 @@ void HarmonicMapper::fixIntersections()
 	fixUniqueEdges();
 	std::cout << "looking for intersections..." << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
-	int maxItntersections = 50;
-	while (fixIntersection() && (maxItntersections > 0)) {
-		std::cout << maxItntersections << std::endl;
-		maxItntersections--;
+	//int maxItntersections = 50;
+	while (fixIntersection() /*&& (maxItntersections > 0)*/) {
+		//std::cout << maxItntersections << std::endl;
+		//maxItntersections--;
 	}
 	fixUniqueEdges();
 	std::cout << "intersections fixed!" << std::endl;
