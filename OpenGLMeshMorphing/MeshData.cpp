@@ -1,6 +1,53 @@
 #include "MeshData.h"
 #include <filesystem>
 
+float* solveSLE(float** A, float* b, int n) {
+	float** AA = (float**)calloc(n, sizeof(float*));
+	for (size_t i = 0; i < n; i++)
+	{
+		AA[i] = (float*)calloc(n + 1, sizeof(float));
+		memcpy(AA[i], A[i], n * sizeof(float));
+		AA[i][n] = b[i];
+	}
+
+	/*std::cout << "AA: " << std::endl;
+
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j < n + 1; j++)
+		{
+			std::cout << std::setw(6) << std::setprecision(2) << AA[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;*/
+
+	for (int i = 0; i < n - 1; i++) {
+		for (int h = i + 1; h < n; h++)
+		{
+			float t = AA[h][i] / AA[i][i];
+			for (int j = 0; j <= n; j++)
+			{
+				AA[h][j] = AA[h][j] - t * AA[i][j];
+			}
+		}
+	}
+
+	float* result = (float*)calloc(n, sizeof(float));
+
+	for (int i = n - 1; i >= 0; i--)
+	{
+		result[i] = AA[i][n];
+		for (int j = n - 1; j > i; j--)
+		{
+			result[i] = result[i] - AA[i][j] * result[j];
+		}
+		result[i] = result[i] / AA[i][i];
+	}
+
+	return result;
+}
+
 MeshData::MeshData(Mesh& mesh)
 {
 	this->mesh = mesh;
@@ -246,9 +293,10 @@ void MeshData::initHarmonicK()
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		if (uniqueEdges[i].isBorder) {
+		/*if (uniqueEdges[i].isBorder) {
+			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
 			continue;
-		}
+		}*/
 
 		bool firstFound = false;
 		int k1 = -1;
@@ -276,35 +324,73 @@ void MeshData::initHarmonicK()
 			}
 		}
 		
-		if (k1 == -1 || k2 == -1) {
+		if (k1 == -1 && k2 == -1) {
 			std::cerr << "Triangle not found!" << std::endl;
 		}
+		else {
+			float result = 0.0f;
 
-		glm::vec3 vk1 = vertices[k1].vertex.position;
-		glm::vec3 vk2 = vertices[k2].vertex.position;
-		glm::vec3 vi = uniqueEdges[i].pos1;
-		glm::vec3 vj = uniqueEdges[i].pos2;
+			glm::vec3 vi = uniqueEdges[i].pos1;
+			glm::vec3 vj = uniqueEdges[i].pos2;
+
+			float lji = glm::distance2(vi, vj);
+
+			if (k1 != -1) {
+				glm::vec3 vk1 = vertices[k1].vertex.position;
+
+				float lik1 = glm::distance2(vi, vk1);
+				float ljk1 = glm::distance2(vj, vk1);
+
+				glm::vec3 ik1 = vk1 - vi;
+				glm::vec3 jk1 = vk1 - vj;
+
+				float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
+
+				result += (lik1 + ljk1 - lji) / Aijk1;
+
+				if (result < 0.0f) {
+					std::cout << "Alert!" << std::endl;
+					std::cout << "lji = " << lji << std::endl;
+					std::cout << "lik1 = " << lik1 << std::endl;
+					std::cout << "ljk1 = " << ljk1 << std::endl;
+				}
+			}
+
+			if (k2 != -1) {
+				glm::vec3 vk2 = vertices[k2].vertex.position;
+
+				float lik2 = glm::distance2(vi, vk2);
+				float ljk2 = glm::distance2(vj, vk2);
+
+				glm::vec3 ik2 = vk2 - vi;
+				glm::vec3 jk2 = vk2 - vj;
+
+				float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
+
+				result += (lik2 + ljk2 - lji) / Aijk2;
+
+				if (result < 0.0f) {
+					std::cout << "Alert!" << std::endl;
+					std::cout << "lji = " << lji << std::endl;
+					std::cout << "lik2 = " << lik2 << std::endl;
+					std::cout << "ljk2 = " << ljk2 << std::endl;
+				}
+			}
+
+			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
+		}
+
 
 		//std::cout << "vertices[" << k1 << "].vertex.position = " << "(" << vk1.x << ", " << vk1.y << ")" << std::endl;
 
-		float lik1 = glm::distance2(vi, vk1);
-		float ljk1 = glm::distance2(vj, vk1);
-		float lik2 = glm::distance2(vi, vk2);
-		float ljk2 = glm::distance2(vj, vk2);
-		float lji = glm::distance2(vi, vj);
 
-		glm::vec3 ik1 = vk1 - vi;
-		glm::vec3 jk1 = vk1 - vj;
-		glm::vec3 ik2 = vk2 - vi;
-		glm::vec3 jk2 = vk2 - vj;
 
-		float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
-		float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
 
 		//std::cout << "lik1 = (" << vi.x <<  ", " << vi.y << ") to (" << vk1.x << ", " << vk1.y << ") = " << lik1 << "; ljk1 = " << ljk1 << "; lik2 = " << lik2 << "; ljk2 = " << ljk2 << "; lji = " << lji << std::endl;
 		//std::cout << "Aijk1 = " << Aijk1 << "; Aijk2 = " << Aijk2 << std::endl;
 
-		k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = ((lik1 + ljk1 - lji) / Aijk1) + ((lik2 + ljk2 - lji) / Aijk2);
+		//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] =  + ((lik2 + ljk2 - lji) / Aijk2);
+		//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
 	}
 
 	for (size_t i = 0; i < vertexCount; i++)
@@ -316,11 +402,11 @@ void MeshData::initHarmonicK()
 			}
 
 			k[i][j] = k[vertices[i].eqClass][vertices[j].eqClass];
-			std::cout << std::setw(6) << std::setprecision(2) << k[i][j] << " ";
+			//std::cout << std::setw(6) << std::setprecision(2) << k[i][j] << " ";
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
-	std::cout << std::endl;
+	//std::cout << std::endl;
 }
 
 void MeshData::initLambda()
@@ -329,29 +415,57 @@ void MeshData::initLambda()
 	{
 		int i0 = uniqueEdges[i].v1;
 		int i1 = uniqueEdges[i].v2;
+		float current_k = k[i0][i1];
 
-		for (size_t i = 0; i < vertexCount; i++)
+		lambda[i0][i1] += current_k;
+		lambda[i1][i0] += current_k;
+
+		for (size_t j = 0; j < uniqueEdges.size(); j++)
+		{
+			if (i == j) {
+				continue;
+			}
+
+			int j0 = uniqueEdges[j].v1;
+			int j1 = uniqueEdges[j].v2;
+
+			if (j0 == i0 || j0 == i1 ) {
+				lambda[j0][j1] += current_k;
+				/*if (j0 > j1) {
+					std::cout << "k[" << i1 << "][" << i0 << "] " << "lambda[" << j1 << "][" << j0 << "] " << lambda[j1][j0] - current_k << " -> " << lambda[j1][j0] << std::endl;
+				}
+				else {
+					std::cout << "k[" << i0 << "][" << i1 << "] " << "lambda[" << j0 << "][" << j1 << "] " << lambda[j0][j1] - current_k << " -> " << lambda[j0][j1] << std::endl;
+				}*/
+			}
+			else if (j1 == i0 || j1 == i1) {
+				lambda[j1][j0] += current_k;
+			}
+		}
+
+		/*for (size_t i = 0; i < vertexCount; i++)
 		{
 			lambda[i0][i] += k[i0][i1];
 			lambda[i1][i] += k[i0][i1];
 			lambda[i][i0] += k[i0][i1];
 			lambda[i][i1] += k[i0][i1];
-		}
+		}*/
 	}
 
+	//std::cout << "lambdas: " << std::endl;
 	for (size_t i = 0; i < vertexCount; i++)
 	{
 		for (size_t j = 0; j < vertexCount; j++)
 		{
 			if (lambda[i][j] == 0.0f) {
-				std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
+				//std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
 				continue;
 			}
 
 			lambda[i][j] = k[i][j] / lambda[i][j];
-			std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
+			//std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
 		}
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
 }
 
@@ -446,7 +560,7 @@ void MeshData::initMap()
 		}
 	}
 
-	std::cout << "U: ";
+	/*std::cout << "U: ";
 	for (size_t i = 0; i < looseVerteicesAmount; i++)
 	{
 		std::cout << U[i] << " ";
@@ -470,6 +584,26 @@ void MeshData::initMap()
 		}
 		std::cout << std::endl;
 	}
+	std::cout << std::endl;*/
+
+	float* u = (float*)calloc(looseVerteicesAmount, sizeof(float));
+	float* v = (float*)calloc(looseVerteicesAmount, sizeof(float));
+
+	u = solveSLE(A, U, looseVerteicesAmount);
+	v = solveSLE(A, V, looseVerteicesAmount);
+
+	std::cout << "u: ";
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		std::cout << u[i] << " ";
+	}
+	std::cout << std::endl;
+
+	std::cout << "v: ";
+	for (size_t i = 0; i < looseVerteicesAmount; i++)
+	{
+		std::cout << v[i] << " ";
+	}
 	std::cout << std::endl;
 
 	//std::cout << "Border length: " << getBorderLength() << std::endl;
@@ -491,12 +625,12 @@ void MeshData::initMap()
 			continue;
 		}
 
-		float t = dPi * eqClass / (float)vertexCount;
+		//float t = dPi * eqClass / (float)vertexCount;
 		//std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
 
 		MapEntity e;
 		//e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
-		e.image = glm::vec2(0.0f, 0.0f);
+		e.image = glm::vec2(u[vertices[eqClass].setIndex], v[vertices[eqClass].setIndex]);
 		e.locked = false;
 		e.border = false;
 		e.phi = 0.0f;

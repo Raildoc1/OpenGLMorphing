@@ -165,6 +165,7 @@
     <ClCompile Include="MeshData.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="shaderClass.cpp" />
+    <ClCompile Include="SimpleSLE.cpp" />
     <ClCompile Include="stb.cpp" />
     <ClCompile Include="SuperMesh.cpp" />
     <ClCompile Include="SuperVAO.cpp" />

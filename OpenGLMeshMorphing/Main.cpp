@@ -61,10 +61,10 @@ int main()
 
 	//std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
 	//std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
-	std::string sourceModelPath = "/Resources/models/pyramide3/pyramide3.gltf";
-	std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
-	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
-	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+	//std::string sourceModelPath = "/Resources/models/pyramide3/pyramide3.gltf";
+	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
+	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
+	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
 	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
 	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
 
@@ -77,8 +77,8 @@ int main()
 	sourceData.init();
 	targetData.init();
 
-	sourceData.harmonizeMap();
-	targetData.harmonizeMap();
+	//sourceData.harmonizeMap();
+	//targetData.harmonizeMap();
 
 	Shader debugShader("dot.vert", "dot.frag", false);
 	debugShader.Activate();
@@ -161,7 +161,7 @@ int main()
 
 	// Super Mesh
 
-	ViewMode mode = ViewMode::Map;
+	ViewMode mode = ViewMode::Super;
 
 	Shader superShader("super.vert", "super.frag", true);
 	SuperMesh* superMesh = mapper.generateSuperMesh();;
