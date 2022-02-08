@@ -129,7 +129,7 @@ struct UniqueEdgeData {
 
 class MeshData {
 private:
-	const float EPSILON = 0.001f;
+	const float EPSILON = 0.00001f;
 	const int MAX_ITER = 25000;
 
 	Mesh mesh;

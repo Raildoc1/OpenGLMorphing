@@ -377,8 +377,8 @@ void MeshData::initHarmonicK()
 				}
 			}
 
-			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
-			//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
+			//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
+			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
 		}
 
 
@@ -722,25 +722,39 @@ void MeshData::harmonizeMap()
 }
 
 glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
+
+	float area = 0.0f;
+	float s = 0.0f;
+	float t = 0.0f;
+
 	for (size_t i = 0; i < indicesCount; i += 3)
 	{
-		glm::vec2 p1 = map[triangles[i + 0]].image;
-		glm::vec2 p2 = map[triangles[i + 1]].image;
-		glm::vec2 p3 = map[triangles[i + 2]].image;
+		glm::vec2 p1 = map[fixedIndices[i + 0]].image;
+		std::cout << "read1 " << i << std::endl;
+		glm::vec2 p2 = map[fixedIndices[i + 1]].image;
+		std::cout << "read1 " << i + 1 << std::endl;
+		glm::vec2 p3 = map[fixedIndices[i + 2]].image;
+		std::cout << "read1 " << i + 2 << std::endl;
 
-		float area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
+		area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
 
-		float s = 1 / (2 * area) * (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * mapPos.x + (p1.x - p3.x) * mapPos.y);
-		float t = 1 / (2 * area) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * mapPos.x + (p2.x - p1.x) * mapPos.y);
+		s = 1 / (2 * area) * (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * mapPos.x + (p1.x - p3.x) * mapPos.y);
+		t = 1 / (2 * area) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * mapPos.x + (p2.x - p1.x) * mapPos.y);
 
-		glm::vec3 v1 = vertices[triangles[i + 0]].vertex.position;
-		glm::vec3 v2 = vertices[triangles[i + 1]].vertex.position;
-		glm::vec3 v3 = vertices[triangles[i + 2]].vertex.position;
+		glm::vec3 v1 = vertices[fixedIndices[i + 0]].vertex.position;
+		std::cout << "read2 " << i << std::endl;
+		glm::vec3 v2 = vertices[fixedIndices[i + 1]].vertex.position;
+		std::cout << "read2 " << i + 1 << std::endl;
+		glm::vec3 v3 = vertices[fixedIndices[i + 2]].vertex.position;
+		std::cout << "read2 " << i + 2 << std::endl;
 
-		if (s > 0 && t > 0 && 1 - s - t > 0) {
+		if (s > -EPSILON && t > -EPSILON && 1 - s - t > -EPSILON) {
 			return v1 + (v2 - v1) * s + (v3 - v1) * t;
 		}
 	}
+
+	std::cout << "ERROR: findVertexPos: could not find vertex position! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
+	return glm::vec3(0.0f);
 }
 
 glm::vec3 MeshData::findBorderPos(float phi) {

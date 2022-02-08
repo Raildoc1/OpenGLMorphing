@@ -386,6 +386,7 @@ void HarmonicMapper::fixUniqueEdges()
 
 void HarmonicMapper::retriangulate()
 {
+	int i = 0;
 	/*std::cout << "before:" << std::endl;
 	for (auto const& e : uniqueEdges)
 	{
@@ -428,9 +429,17 @@ void HarmonicMapper::retriangulate()
 
 			uniqueEdges.push_back(e);
 
+			std::cout << i++ << std::endl;
+
+			if (i > 5000) {
+				goto outout;
+			}
+
 		out:;
 		}
 	}
+
+outout:;
 
 	/*std::cout << "new:" << std::endl;
 	for (auto const& e : uniqueEdges)
