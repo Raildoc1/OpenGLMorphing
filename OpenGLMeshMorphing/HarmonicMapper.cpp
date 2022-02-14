@@ -12,8 +12,6 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 	border = std::vector<BorderEntity>();
 
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
-	firstExtraIndex = lastVertexIndex + 1;
-
 }
 
 bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively)
@@ -55,6 +53,9 @@ void HarmonicMapper::init()
 
 void HarmonicMapper::initMap()
 {
+	//float rotation = glm::pi<float>();
+	float rotation = 0.0f;
+
 	for (auto const& x : source->map)
 	{
 		int i = x.first;
@@ -65,6 +66,8 @@ void HarmonicMapper::initMap()
 		e.baseEqClass = i;
 		e.vertexType = VertexType::Source;
 		e.srcPos = source->vertices[i].vertex.position;
+
+		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), -rotation);
 
 		if (!x.second.border) {
 			e.tarPos = target->findVertexPos(x.second.image);
@@ -89,8 +92,11 @@ void HarmonicMapper::initMap()
 		e.vertexType = VertexType::Target;
 		e.tarPos = target->vertices[i].vertex.position;
 
+		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), rotation);
+
 		if (!x.second.border) {
 			e.srcPos = source->findVertexPos(x.second.image);
+			//e.srcPos = source->findVertexPos(x.second.image);
 			//e.srcPos = glm::vec3(0.0f);
 		} else {
 			e.srcPos = source->findBorderPos(x.second.phi);
@@ -112,6 +118,7 @@ void HarmonicMapper::initEdges()
 	}
 
 	int vertexCount = source->getVertexCount();
+	firstTargetIndex = source->uniqueEdges.size();
 
 	for (auto const& x : target->uniqueEdges)
 	{
@@ -123,6 +130,8 @@ void HarmonicMapper::initEdges()
 		temp.type = VertexType::Target;
 		uniqueEdges.push_back(temp);
 	}
+
+	firstExtraIndex = source->uniqueEdges.size() + target->uniqueEdges.size();
 }
 
 void HarmonicMapper::fixMapBound()
@@ -212,38 +221,37 @@ void HarmonicMapper::fixIntersections()
 	fixUniqueEdges();
 	std::cout << "looking for intersections..." << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
-	//int maxItntersections = 50;
-	while (fixIntersection() /*&& (maxItntersections > 0)*/) {
-		//std::cout << maxItntersections << std::endl;
-		//maxItntersections--;
+
+	while (fixIntersection(0, firstTargetIndex, firstTargetIndex, firstExtraIndex, false, nullptr, nullptr)) {
+
 	}
+
+	std::cout << "first step finished with " << uniqueEdges.size() << " edges!" << std::endl;
+	fixUniqueEdges();
+
+	int fixAmount = 0;
+	int bound1 = 0;
+	int bound2 = firstExtraIndex;
+	while (fixIntersection(bound1, uniqueEdges.size(), bound2, uniqueEdges.size(), true, &bound1, &bound2)) {
+		std::cout << ++fixAmount << std::endl;
+	}
+
 	fixUniqueEdges();
 	std::cout << "intersections fixed!" << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
 }
 
-bool HarmonicMapper::fixIntersection()
+bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBound = false, int* bound1 = nullptr, int* bound2 = nullptr)
 {
-	for (size_t i = 0; i < uniqueEdges.size(); i++)
+	for (size_t i = i0; i < i1; i++)
 	{
 		if (uniqueEdges[i].v1 == -1) {
 			//std::cout << "this edge must be deleted" << std::endl;
 			continue;
 		}
 
-		bool intersectionFound = false;
 
-		if (i > firstExtraIndex) {
-			extraIndexesReached = true;
-		}
-
-		size_t j = i + 1;
-
-		if (extraIndexesReached && j < firstExtraIndex) {
-			j = firstExtraIndex;
-		}
-
-		for (; j < uniqueEdges.size(); j++)
+		for (size_t j = j0; j < j1; j++)
 		{
 			if (i == j) {
 				continue;
@@ -261,7 +269,7 @@ bool HarmonicMapper::fixIntersection()
 
 			glm::vec2 intersection;
 
-			if (intersectionFound = TryFindIntersection(map[a].image, map[b].image, map[c].image, map[d].image, &intersection, true)) {
+			if (TryFindIntersection(map[a].image, map[b].image, map[c].image, map[d].image, &intersection, true)) {
 
 				//std::cout << "intersect: (" << to_string(map[a].image) << ", " << to_string(map[b].image) << ") - (" << to_string(map[c].image) << ", " << to_string(map[d].image) << ")" << std::endl;
 				//std::cout << "intersect: (" << a << ", " << b << ") - (" << c << ", " << d << ")" << std::endl;
@@ -348,6 +356,18 @@ bool HarmonicMapper::fixIntersection()
 				uniqueEdges[i].v1 = -1;
 				uniqueEdges[j].v1 = -1;
 
+				int delta = 0;
+
+				if (i < firstExtraIndex) {
+					delta++;
+				}
+
+				if (j < firstExtraIndex) {
+					delta++;
+				}
+
+				firstExtraIndex -= delta;
+
 				uniqueEdges.push_back(e1);
 				uniqueEdges.push_back(e2);
 				uniqueEdges.push_back(e3);
@@ -355,6 +375,14 @@ bool HarmonicMapper::fixIntersection()
 				return true;
 			}
 		}
+
+		if (moveBound) {
+			(*bound1)++;
+		}
+	}
+
+	if (moveBound) {
+		(*bound2)++;
 	}
 
 	return false;
@@ -386,12 +414,9 @@ void HarmonicMapper::fixUniqueEdges()
 
 void HarmonicMapper::retriangulate()
 {
+	std::cout << "retriangulating..." << std::endl;
+
 	int i = 0;
-	/*std::cout << "before:" << std::endl;
-	for (auto const& e : uniqueEdges)
-	{
-		std::cout << "(" << e.v1 << "," << e.v2 << ")" << std::endl;
-	}*/
 
 	for (auto const& x : map)
 	{
@@ -405,19 +430,12 @@ void HarmonicMapper::retriangulate()
 				continue;
 			}
 
-			//std::cout << "unique edges amount = " << uniqueEdges.size() << std::endl;
 			for (auto const& e : uniqueEdges)
 			{
 				glm::vec2 intersection;
-				/*if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
-					std::cout << "-----------------------------" << std::endl;
-				}*/
 				if (TryFindIntersection(x.second.image, y.second.image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
 					goto out;
 				}
-				/*if (x.first == 6 && y.first == 2 && e.v1 == 25 && e.v2 == 10) {
-					std::cout << "-----------------------------" << std::endl;
-				}*/
 			}
 
 			UniqueEdgeData e;
@@ -431,21 +449,95 @@ void HarmonicMapper::retriangulate()
 
 			std::cout << i++ << std::endl;
 
-			if (i > 5000) {
-				goto outout;
-			}
-
 		out:;
 		}
 	}
 
 outout:;
 
+	std::cout << "retriangulating finished successfully!" << std::endl;
 	/*std::cout << "new:" << std::endl;
 	for (auto const& e : uniqueEdges)
 	{
 		std::cout << "(" << e.v1 << "," << e.v2 << ")" << std::endl;
 	}*/
+}
+
+void HarmonicMapper::fast_retriangulate()
+{
+	std::cout << "retriangulating..." << std::endl;
+
+	int n = 0;
+
+	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
+	{
+		int triangles_desired_amount = uniqueEdges[i].isBorder ? 1 : 2;
+
+		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
+		{
+			if (!uniqueEdges[i].adjacent(uniqueEdges[j])) {
+				continue;
+			}
+
+			int v1 = -1;
+			int v2 = -1;
+
+			if (uniqueEdges[i].v1 == uniqueEdges[j].v1) {
+				v1 = uniqueEdges[i].v2;
+				v2 = uniqueEdges[j].v2;
+			} else if (uniqueEdges[i].v1 == uniqueEdges[j].v2) {
+				v1 = uniqueEdges[i].v2;
+				v2 = uniqueEdges[j].v1;
+			} else if (uniqueEdges[i].v2 == uniqueEdges[j].v1) {
+				v1 = uniqueEdges[i].v1;
+				v2 = uniqueEdges[j].v2;
+			} else {
+				v1 = uniqueEdges[i].v1;
+				v2 = uniqueEdges[j].v1;
+			}
+
+			if (hasEdge(v1, v2)) {
+				triangles_desired_amount--;
+				if (triangles_desired_amount <= 0) {
+					break;
+				}
+			}
+
+			for (auto const& e : uniqueEdges)
+			{
+				auto temp = e;
+				if (uniqueEdges[i].equals(temp) || uniqueEdges[j].equals(temp)) {
+					continue;
+				}
+
+				glm::vec2 intersection;
+				if (TryFindIntersection(map[v1].image, map[v2].image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
+					std::cout << "***out***" << std::endl;
+					goto out;
+				}
+			}
+
+			UniqueEdgeData e;
+			e.isBorder = false;
+			e.v1 = v1;
+			e.v2 = v2;
+			e.pos1 = glm::vec3();
+			e.pos2 = glm::vec3();
+
+			uniqueEdges.push_back(e);
+
+			std::cout << n++ << std::endl;
+
+			triangles_desired_amount--;
+			if (triangles_desired_amount <= 0) {
+				break;
+			}
+
+		out:;
+		}
+	}
+
+	std::cout << "retriangulating finished successfully!" << std::endl;
 }
 
 void HarmonicMapper::clearMap()

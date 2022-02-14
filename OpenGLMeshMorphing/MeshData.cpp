@@ -48,11 +48,13 @@ float* solveSLE(float** A, float* b, int n) {
 	return result;
 }
 
-MeshData::MeshData(Mesh& mesh)
+MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 {
 	this->mesh = mesh;
 	this->vertexCount = mesh.vertices.size();
 	this->edgesCount = mesh.indices.size();
+	this->rotation = rotation;
+	this->invertBorder = invertBorder;
 
 	vertices = (VertexData*)calloc(vertexCount, sizeof(VertexData));
 	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
@@ -191,7 +193,7 @@ void MeshData::initBorder()
 			}
 
 			if (edges[i].equals(edges[j])) {
-				/*std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == " 
+				/*std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == "
 					<< i << ": " << "(" << edges[j].v1.eqClass << ", " << edges[j].v2.eqClass << ")" << std::endl;*/
 				isDuplicate = true;
 				break;
@@ -317,13 +319,14 @@ void MeshData::initHarmonicK()
 				if (!firstFound) {
 					firstFound = true;
 					k1 = k0;
-				} else {
+				}
+				else {
 					k2 = k0;
 					break;
 				}
 			}
 		}
-		
+
 		if (k1 == -1 && k2 == -1) {
 			std::cerr << "Triangle not found!" << std::endl;
 		}
@@ -338,47 +341,87 @@ void MeshData::initHarmonicK()
 			if (k1 != -1) {
 				glm::vec3 vk1 = vertices[k1].vertex.position;
 
-				float lik1 = glm::distance2(vi, vk1);
-				float ljk1 = glm::distance2(vj, vk1);
+				if (coeffType == CoeffType::Kanai) {
 
-				glm::vec3 ik1 = vk1 - vi;
-				glm::vec3 jk1 = vk1 - vj;
+					float lik1 = glm::distance2(vi, vk1);
+					float ljk1 = glm::distance2(vj, vk1);
 
-				float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
+					glm::vec3 ik1 = vk1 - vi;
+					glm::vec3 jk1 = vk1 - vj;
 
-				result += (lik1 + ljk1 - lji) / Aijk1;
+					float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
 
-				if (result < 0.0f) {
-					std::cout << "Alert!" << std::endl;
-					std::cout << "lji = " << lji << std::endl;
-					std::cout << "lik1 = " << lik1 << std::endl;
-					std::cout << "ljk1 = " << ljk1 << std::endl;
+					result += (lik1 + ljk1 - lji) / Aijk1;
+
+					if (result < 0.0f) {
+						std::cout << "Alert!" << std::endl;
+						std::cout << "lji = " << lji << std::endl;
+						std::cout << "lik1 = " << lik1 << std::endl;
+						std::cout << "ljk1 = " << ljk1 << std::endl;
+					}
+				}
+				else if (coeffType == CoeffType::MVC) {
+					float dotij = glm::dot(glm::normalize(vj - vi), glm::normalize(vk1 - vi));
+					float alpha = glm::acos(dotij);
+
+					result += glm::tan(alpha / 2.0f) / glm::distance(vi, vj);
+
+					if (result < 0.0f) {
+						std::cout << "Alert!" << std::endl;
+					}
+				}
+				else if (coeffType == CoeffType::DHC) {
+					float dotij = glm::dot(glm::normalize(vj - vk1), glm::normalize(vi - vk1));
+					float gamma = glm::acos(dotij);
+
+					result += 1.0f / glm::tan(gamma);
 				}
 			}
 
 			if (k2 != -1) {
 				glm::vec3 vk2 = vertices[k2].vertex.position;
 
-				float lik2 = glm::distance2(vi, vk2);
-				float ljk2 = glm::distance2(vj, vk2);
+				if (coeffType == CoeffType::Kanai) {
+					float lik2 = glm::distance2(vi, vk2);
+					float ljk2 = glm::distance2(vj, vk2);
 
-				glm::vec3 ik2 = vk2 - vi;
-				glm::vec3 jk2 = vk2 - vj;
+					glm::vec3 ik2 = vk2 - vi;
+					glm::vec3 jk2 = vk2 - vj;
 
-				float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
+					float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
 
-				result += (lik2 + ljk2 - lji) / Aijk2;
+					result += (lik2 + ljk2 - lji) / Aijk2;
 
-				if (result < 0.0f) {
-					std::cout << "Alert!" << std::endl;
-					std::cout << "lji = " << lji << std::endl;
-					std::cout << "lik2 = " << lik2 << std::endl;
-					std::cout << "ljk2 = " << ljk2 << std::endl;
+					if (result < 0.0f) {
+						std::cout << "Alert!" << std::endl;
+						std::cout << "lji = " << lji << std::endl;
+						std::cout << "lik2 = " << lik2 << std::endl;
+						std::cout << "ljk2 = " << ljk2 << std::endl;
+					}
+				}
+				else if (coeffType == CoeffType::MVC) {
+					float dotji = glm::dot(glm::normalize(vj - vi), glm::normalize(vk2 - vi));
+					float beta = glm::acos(dotji);
+
+					result += glm::tan(beta / 2.0f) / glm::distance(vi, vj);
+
+					if (result < 0.0f) {
+						std::cout << "Alert!" << std::endl;
+					}
+				}
+				else if (coeffType == CoeffType::DHC) {
+					float dotji = glm::dot(glm::normalize(vj - vk2), glm::normalize(vi - vk2));
+					float gamma = glm::acos(dotji);
+
+					result += 1.0f / glm::tan(gamma);
 				}
 			}
 
-			//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
-			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
+			if (coeffType == CoeffType::One) {
+				k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
+			} else {
+				k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
+			}
 		}
 
 
@@ -430,30 +473,23 @@ void MeshData::initLambda()
 			int j0 = uniqueEdges[j].v1;
 			int j1 = uniqueEdges[j].v2;
 
-			if (j0 == i0 || j0 == i1 ) {
+			if (j0 == i0 || j0 == i1) {
 				lambda[j0][j1] += current_k;
-				/*if (j0 > j1) {
-					std::cout << "k[" << i1 << "][" << i0 << "] " << "lambda[" << j1 << "][" << j0 << "] " << lambda[j1][j0] - current_k << " -> " << lambda[j1][j0] << std::endl;
-				}
-				else {
-					std::cout << "k[" << i0 << "][" << i1 << "] " << "lambda[" << j0 << "][" << j1 << "] " << lambda[j0][j1] - current_k << " -> " << lambda[j0][j1] << std::endl;
+				/*if (j0 == 1080 && j1 == 966) {
+					std::cout << lambda[j0][j1] << " " << current_k << std::endl;
 				}*/
 			}
 			else if (j1 == i0 || j1 == i1) {
 				lambda[j1][j0] += current_k;
+				/*if (j1 == 1080 && j0 == 966) {
+					std::cout << lambda[j0][j1] << " " << current_k << std::endl;
+				}*/
 			}
 		}
 
-		/*for (size_t i = 0; i < vertexCount; i++)
-		{
-			lambda[i0][i] += k[i0][i1];
-			lambda[i1][i] += k[i0][i1];
-			lambda[i][i0] += k[i0][i1];
-			lambda[i][i1] += k[i0][i1];
-		}*/
 	}
 
-	//std::cout << "lambdas: " << std::endl;
+	std::cout << "lambdas: " << std::endl;
 	for (size_t i = 0; i < vertexCount; i++)
 	{
 		for (size_t j = 0; j < vertexCount; j++)
@@ -465,6 +501,13 @@ void MeshData::initLambda()
 
 			lambda[i][j] = k[i][j] / lambda[i][j];
 			//std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
+			/*if (i == 1080 && j == 966) {
+				std::cout << "lambda = " << lambda[i][j] << " " << k[i][j] << std::endl;
+			}*/
+			if (lambda[i][j] < 0.0f) {
+				std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << std::endl;
+			}
+			//std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << " ";
 		}
 		//std::cout << std::endl;
 	}
@@ -502,9 +545,25 @@ void MeshData::initMap()
 	float dPi = glm::pi<float>() * 2.0f;
 	float borderLength = getBorderLength();
 
+
+
 	for (size_t i = 0; i < border.size(); i++)
 	{
-		float t = dPi * currentLength / borderLength;
+		size_t j = i;
+
+		if (invertBorder) {
+			j = border.size() - i - 1;
+		}
+
+		float t = dPi * currentLength / borderLength + rotation;
+
+		while (t < 0.0f) {
+			t += dPi;
+		}
+
+		while (t >= dPi) {
+			t -= dPi;
+		}
 
 		MapEntity e;
 		e.locked = true;
@@ -512,12 +571,12 @@ void MeshData::initMap()
 		e.border = true;
 		e.phi = t;
 
-		currentLength += border[i].length;
+		currentLength += border[j].length;
 
-		map[border[i].v1.eqClass] = e;
+		map[border[j].v1.eqClass] = e;
 
 		BorderVertex v;
-		v.eqClass = border[i].v1.eqClass;
+		v.eqClass = border[j].v1.eqClass;
 		v.phi = t;
 
 		borderVertices.push_back(v);
@@ -730,11 +789,11 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
 	for (size_t i = 0; i < indicesCount; i += 3)
 	{
 		glm::vec2 p1 = map[fixedIndices[i + 0]].image;
-		std::cout << "read1 " << i << std::endl;
+		//std::cout << "read1 " << i << std::endl;
 		glm::vec2 p2 = map[fixedIndices[i + 1]].image;
-		std::cout << "read1 " << i + 1 << std::endl;
+		//std::cout << "read1 " << i + 1 << std::endl;
 		glm::vec2 p3 = map[fixedIndices[i + 2]].image;
-		std::cout << "read1 " << i + 2 << std::endl;
+		//std::cout << "read1 " << i + 2 << std::endl;
 
 		area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
 
@@ -742,11 +801,11 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
 		t = 1 / (2 * area) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * mapPos.x + (p2.x - p1.x) * mapPos.y);
 
 		glm::vec3 v1 = vertices[fixedIndices[i + 0]].vertex.position;
-		std::cout << "read2 " << i << std::endl;
+		//std::cout << "read2 " << i << std::endl;
 		glm::vec3 v2 = vertices[fixedIndices[i + 1]].vertex.position;
-		std::cout << "read2 " << i + 1 << std::endl;
+		//std::cout << "read2 " << i + 1 << std::endl;
 		glm::vec3 v3 = vertices[fixedIndices[i + 2]].vertex.position;
-		std::cout << "read2 " << i + 2 << std::endl;
+		//std::cout << "read2 " << i + 2 << std::endl;
 
 		if (s > -EPSILON && t > -EPSILON && 1 - s - t > -EPSILON) {
 			return v1 + (v2 - v1) * s + (v3 - v1) * t;
@@ -758,6 +817,17 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
 }
 
 glm::vec3 MeshData::findBorderPos(float phi) {
+
+	float pi = glm::pi<float>();
+
+	/*while (phi < 0.0f) {
+		phi += 2 * pi;
+	}
+
+	while (phi >= 2 * pi) {
+		phi -= 2 * pi;
+	}*/
+
 	for (size_t i = 0; i < borderVertices.size(); i++)
 	{
 		int j = (i + 1) % borderVertices.size();
@@ -765,11 +835,16 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 		float phi1 = borderVertices[i].phi;
 		float phi2 = borderVertices[j].phi;
 
+		while (phi2 < phi1) {
+			phi2 += pi * 2.0f;
+		}
+
 		if (phi1 < phi && phi < phi2) {
 			float t = (phi - phi1) / (phi2 - phi1);
 			return vertices[borderVertices[i].eqClass].vertex.position * t +
 				vertices[borderVertices[j].eqClass].vertex.position * (1.0f - t);
-		} else if (borderVertices[i].phi == phi) {
+		}
+		else if (borderVertices[i].phi == phi) {
 			return vertices[borderVertices[i].eqClass].vertex.position;
 		}
 	}

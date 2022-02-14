@@ -4,6 +4,7 @@
 #include <set>
 
 enum class VertexType { Source, Target, Extra, Merged };
+enum class CoeffType { One, DHC, MVC, Kanai };
 
 struct VertexData {
 	Vertex vertex;
@@ -134,12 +135,15 @@ private:
 
 	Mesh mesh;
 
+	CoeffType coeffType = CoeffType::Kanai;
+
 	int vertexCount;
 	int edgesCount;
 	int indicesCount;
 
 	float borderLength = 0.0f;
 	float lastEnergy = 0.0f;
+	float rotation = 0.0f;
 
 	std::vector<int> fixedIndices;
 	std::map<int, glm::vec2> derivatives;
@@ -152,6 +156,7 @@ private:
 	int looseVerteicesAmount;
 
 	bool initialized = false;
+	bool invertBorder = false;
 
 	void initEdges();
 	void initVertices();
@@ -185,7 +190,7 @@ public:
 	float** k;
 	float** lambda;
 
-	MeshData(Mesh& mesh);
+	MeshData(Mesh& mesh, float rotation, bool invertBorder);
 	~MeshData();
 	void init();
 

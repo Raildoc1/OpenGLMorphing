@@ -16,7 +16,7 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Super
+#define mode           ViewMode::Map
 #define draw_src_map   true
 #define draw_tar_map   true
 #define draw_super_map true
@@ -41,20 +41,22 @@ int main()
 	}
 
 	std::string parentDir = (fs::current_path().fs::path::parent_path()).string();
-	std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
-	std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
+	//std::string sourceModelPath = "/Resources/models/pyramide1/pyramide1.gltf";
+	//std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
 	//std::string sourceModelPath = "/Resources/models/pyramide3/pyramide3.gltf";
 	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
 	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
-	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
-	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
+	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
 
-	MeshData sourceData = MeshData(sourceModel.GetMesh());
-	MeshData targetData = MeshData(targetModel.GetMesh());
+	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
+	MeshData targetData = MeshData(targetModel.GetMesh(), glm::pi<float>() / 4.0f, true);
 
 	sourceData.init();
 	targetData.init();

@@ -28,6 +28,7 @@ private:
 
 	int lastVertexIndex = 0;
 	int firstExtraIndex = 0;
+	int firstTargetIndex = 0;
 	bool extraIndexesReached = false;
 
 public:
@@ -45,9 +46,10 @@ public:
 	void initEdges();
 	void fixMapBound();
 	void fixIntersections();
-	bool fixIntersection();
+	bool fixIntersection(int i0, int i1, int j0, int j1, bool moveBound, int* bound1, int* bound2);
 	void fixUniqueEdges();
 	void retriangulate();
+	void fast_retriangulate();
 	void clearMap();
 
 	void Equalize(int v1, int v2);
