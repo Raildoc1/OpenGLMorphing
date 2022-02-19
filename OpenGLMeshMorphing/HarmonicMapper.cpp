@@ -223,7 +223,9 @@ void HarmonicMapper::fixIntersections()
 	std::cout << "looking for intersections..." << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
 
-	while (fixIntersection(0, firstTargetIndex, firstTargetIndex, firstExtraIndex, false, nullptr, nullptr)) {
+	std::cout << "Checking (0, " << firstTargetIndex << ") -> (" << firstTargetIndex << ", " << firstExtraIndex << ")" << std::endl;
+
+	while (fixIntersection(0, firstTargetIndex, firstTargetIndex, firstExtraIndex - 1, false, nullptr, nullptr)) {
 
 	}
 
@@ -391,12 +393,23 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 
 void HarmonicMapper::fixUniqueEdges()
 {
+	std::cout << "Looking for doubles: " << uniqueEdges.size() << " -> ";
+
 	for (size_t i = 0; i < uniqueEdges.size() - 1; i++)
 	{
 		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
 		{
 			if (uniqueEdges[i].equals(uniqueEdges[j])) {
 				uniqueEdges[j].v1 = -1;
+
+				if (j < firstTargetIndex) {
+					firstTargetIndex--;
+				}
+				if (j < firstExtraIndex) {
+					firstExtraIndex--;
+				}
+
+				//std::cout << "remove " << j << "; firstTargetIndex = " << firstTargetIndex << "; firstExtraIndex = " << firstExtraIndex << std::endl;
 			}
 		}
 	}
@@ -411,6 +424,8 @@ void HarmonicMapper::fixUniqueEdges()
 
 		it++;
 	}
+
+	std::cout << uniqueEdges.size() << std::endl;
 }
 
 void HarmonicMapper::retriangulate()
@@ -473,14 +488,6 @@ void HarmonicMapper::fast_retriangulate()
 	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
 	{
 		int triangles_desired_amount = uniqueEdges[i].isBorder ? 1 : 2;
-
-		if (n > 2000) {
-			std::cout << "out out!" << std::endl;
-			std::cout << uniqueEdges.size() << std::endl;
-			fixUniqueEdges();
-			std::cout << uniqueEdges.size() << std::endl;
-			break;
-		}
 
 		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
@@ -617,9 +624,14 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 	std::vector <GLuint> * indices = new std::vector <GLuint>();
 	std::cout << "vectors created successfully!" << std::endl;
 
+	int n = 0;
+
 	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
 	{
 		auto e1 = uniqueEdges[i];
+
+		int triangles_desired_amount = e1.isBorder ? 1 : 2;
+
 		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
 			if (i == j) {
@@ -636,38 +648,22 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 				auto e3 = uniqueEdges[k];
 
 				if (e1.isTriangle(e2, e3)) {
-					//std::cout << "triangle:" << std::endl;
-					//std::cout << e1.v1 << "," << e1.v2 << std::endl;
-					//std::cout << e2.v1 << "," << e2.v2 << std::endl;
-					//std::cout << e3.v1 << "," << e3.v2 << std::endl;
 
 					SuperVertex v1;
-					//std::cout << "finalMorphMap[" << e1.v1 << "]" << std::endl;
 					v1.position1 = finalMorphMap[e1.v1].srcPos;
 					v1.position2 = finalMorphMap[e1.v1].tarPos;
-					v1.normal1 = glm::normalize(finalMorphMap[e1.v1].srcPos);
-					v1.normal2 = glm::normalize(finalMorphMap[e1.v1].srcPos);
 
 					SuperVertex v2;
-					//std::cout << "finalMorphMap[" << e1.v2 << "]" << std::endl;
 					v2.position1 = finalMorphMap[e1.v2].srcPos;
 					v2.position2 = finalMorphMap[e1.v2].tarPos;
-					v2.normal1 = glm::normalize(finalMorphMap[e1.v2].srcPos);
-					v2.normal2 = glm::normalize(finalMorphMap[e1.v2].tarPos);
 
 					SuperVertex v3;
 					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
-						//std::cout << "finalMorphMap[" << e3.v1 << "]" << std::endl;
 						v3.position1 = finalMorphMap[e3.v1].srcPos;
 						v3.position2 = finalMorphMap[e3.v1].tarPos;
-						v3.normal1 = glm::normalize(finalMorphMap[e3.v1].srcPos);
-						v3.normal2 = glm::normalize(finalMorphMap[e3.v1].tarPos);
 					} else {
-						//std::cout << "finalMorphMap[" << e3.v2 << "]" << std::endl;
 						v3.position1 = finalMorphMap[e3.v2].srcPos;
 						v3.position2 = finalMorphMap[e3.v2].tarPos;
-						v3.normal1 = glm::normalize(finalMorphMap[e3.v2].srcPos);
-						v3.normal2 = glm::normalize(finalMorphMap[e3.v2].tarPos);
 					}
 					vertices->push_back(v1);
 					indices->push_back(vertices->size() - 1);
@@ -675,11 +671,18 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 					indices->push_back(vertices->size() - 1);
 					vertices->push_back(v3);
 					indices->push_back(vertices->size() - 1);
-					//std::cout << "break" << std::endl;
+
+					std::cout << ++n << std::endl;
+
+					if ((--triangles_desired_amount) <= 0) {
+						goto out;
+					}
+
 					break;
 				}
 			}
 		}
+	out:;
 	}
 
 	std::cout << "Super mesh vertices amount = " << vertices->size() << std::endl;

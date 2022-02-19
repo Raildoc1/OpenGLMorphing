@@ -7,8 +7,6 @@ struct SuperVertex
 {
 	glm::vec3 position1;
 	glm::vec3 position2;
-	glm::vec3 normal1;
-	glm::vec3 normal2;
 };
 
 class SuperVBO

@@ -135,7 +135,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::Kanai;
+	CoeffType coeffType = CoeffType::One;
 
 	int vertexCount;
 	int edgesCount;
