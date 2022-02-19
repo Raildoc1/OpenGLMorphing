@@ -47,7 +47,8 @@ void HarmonicMapper::init()
 	fixMapBound();
 	fixIntersections();
 	clearMap();
-	retriangulate();
+	//retriangulate();
+	fast_retriangulate();
 	initialized = true;
 }
 
@@ -473,6 +474,14 @@ void HarmonicMapper::fast_retriangulate()
 	{
 		int triangles_desired_amount = uniqueEdges[i].isBorder ? 1 : 2;
 
+		if (n > 2000) {
+			std::cout << "out out!" << std::endl;
+			std::cout << uniqueEdges.size() << std::endl;
+			fixUniqueEdges();
+			std::cout << uniqueEdges.size() << std::endl;
+			break;
+		}
+
 		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
 			if (!uniqueEdges[i].adjacent(uniqueEdges[j])) {
@@ -496,11 +505,17 @@ void HarmonicMapper::fast_retriangulate()
 				v2 = uniqueEdges[j].v1;
 			}
 
+			if (v1 == -1 || v2 == -1) {
+				std::cout << "[ERROR]: edge not found: v1 = " << v1 << ", v2 = " << v2 << std::endl;
+				continue;
+			}
+
 			if (hasEdge(v1, v2)) {
 				triangles_desired_amount--;
 				if (triangles_desired_amount <= 0) {
 					break;
 				}
+				continue;
 			}
 
 			for (auto const& e : uniqueEdges)
@@ -512,8 +527,8 @@ void HarmonicMapper::fast_retriangulate()
 
 				glm::vec2 intersection;
 				if (TryFindIntersection(map[v1].image, map[v2].image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
-					std::cout << "***out***" << std::endl;
-					goto out;
+					//std::cout << "***out***" << std::endl;
+					goto out1;
 				}
 			}
 
@@ -533,7 +548,7 @@ void HarmonicMapper::fast_retriangulate()
 				break;
 			}
 
-		out:;
+		out1:;
 		}
 	}
 
