@@ -295,11 +295,6 @@ void MeshData::initHarmonicK()
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		/*if (uniqueEdges[i].isBorder) {
-			k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
-			continue;
-		}*/
-
 		bool firstFound = false;
 		int k1 = -1;
 		int k2 = -1;
@@ -423,18 +418,6 @@ void MeshData::initHarmonicK()
 				k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
 			}
 		}
-
-
-		//std::cout << "vertices[" << k1 << "].vertex.position = " << "(" << vk1.x << ", " << vk1.y << ")" << std::endl;
-
-
-
-
-		//std::cout << "lik1 = (" << vi.x <<  ", " << vi.y << ") to (" << vk1.x << ", " << vk1.y << ") = " << lik1 << "; ljk1 = " << ljk1 << "; lik2 = " << lik2 << "; ljk2 = " << ljk2 << "; lji = " << lji << std::endl;
-		//std::cout << "Aijk1 = " << Aijk1 << "; Aijk2 = " << Aijk2 << std::endl;
-
-		//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] =  + ((lik2 + ljk2 - lji) / Aijk2);
-		//k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
 	}
 
 	for (size_t i = 0; i < vertexCount; i++)
@@ -620,32 +603,6 @@ void MeshData::initMap()
 		}
 	}
 
-	/*std::cout << "U: ";
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		std::cout << U[i] << " ";
-	}
-	std::cout << std::endl;
-
-	std::cout << "V: ";
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		std::cout << V[i] << " ";
-	}
-	std::cout << std::endl;
-
-	std::cout << "A: " << std::endl;
-
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		for (size_t j = 0; j < looseVerteicesAmount; j++)
-		{
-			std::cout << A[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;*/
-
 	float* u = (float*)calloc(looseVerteicesAmount, sizeof(float));
 	float* v = (float*)calloc(looseVerteicesAmount, sizeof(float));
 
@@ -820,14 +777,6 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 
 	float pi = glm::pi<float>();
 
-	/*while (phi < 0.0f) {
-		phi += 2 * pi;
-	}
-
-	while (phi >= 2 * pi) {
-		phi -= 2 * pi;
-	}*/
-
 	for (size_t i = 0; i < borderVertices.size(); i++)
 	{
 		int j = (i + 1) % borderVertices.size();
@@ -835,17 +784,30 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 		float phi1 = borderVertices[i].phi;
 		float phi2 = borderVertices[j].phi;
 
+		while (phi1 >= pi * 2.0f) {
+			phi1 -= pi * 2.0f;
+		}
+
+		while (phi2 >= pi * 2.0f) {
+			phi2 -= pi * 2.0f;
+		}
+
+		while (phi1 < 0.0f) {
+			phi1 += pi * 2.0f;
+		}
+
+		while (phi2 < 0.0f) {
+			phi2 += pi * 2.0f;
+		}
+
 		while (phi2 < phi1) {
 			phi2 += pi * 2.0f;
 		}
 
-		if (phi1 < phi && phi < phi2) {
+		if (phi1 <= phi && phi <= phi2) {
 			float t = (phi - phi1) / (phi2 - phi1);
-			return vertices[borderVertices[i].eqClass].vertex.position * t +
-				vertices[borderVertices[j].eqClass].vertex.position * (1.0f - t);
-		}
-		else if (borderVertices[i].phi == phi) {
-			return vertices[borderVertices[i].eqClass].vertex.position;
+			return vertices[borderVertices[j].eqClass].vertex.position * t +
+				vertices[borderVertices[i].eqClass].vertex.position * (1.0f - t);
 		}
 	}
 
