@@ -31,6 +31,8 @@ private:
 	int firstTargetIndex = 0;
 	bool extraIndexesReached = false;
 
+	float mergeDistance = 0.001f;
+
 public:
 	std::map<int, MapEntity> map;
 	std::map<int, MorphEntity> finalMorphMap;
@@ -46,6 +48,7 @@ public:
 	void initEdges();
 	void fixMapBound();
 	void fixIntersections();
+	void mergeCloseVertices();
 	bool fixIntersection(int i0, int i1, int j0, int j1, bool moveBound, int* bound1, int* bound2);
 	void fixUniqueEdges();
 	void retriangulate();

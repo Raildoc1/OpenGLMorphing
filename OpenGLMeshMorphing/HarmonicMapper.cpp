@@ -45,6 +45,7 @@ void HarmonicMapper::init()
 	initMap();
 	initEdges();
 	fixMapBound();
+	mergeCloseVertices();
 	fixIntersections();
 	clearMap();
 	//retriangulate();
@@ -187,6 +188,8 @@ void HarmonicMapper::fixMapBound()
 		}
 	}
 
+	fixUniqueEdges();
+
 	for (auto it = uniqueEdges.begin(); it != uniqueEdges.end();)
 	{
 		if (!(*it).isBorder)
@@ -242,6 +245,47 @@ void HarmonicMapper::fixIntersections()
 	fixUniqueEdges();
 	std::cout << "intersections fixed!" << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
+}
+
+void HarmonicMapper::mergeCloseVertices() {
+	for (size_t i = 0; i < uniqueEdges.size() - 1; i++)
+	{
+		if (uniqueEdges[i].isBorder) {
+			continue;
+		}
+
+		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
+		{
+			if (uniqueEdges[j].isBorder) {
+				continue;
+			}
+
+			int v1 = uniqueEdges[i].v1;
+			int u1 = uniqueEdges[i].v2;
+			int v2 = uniqueEdges[j].v1;
+			int u2 = uniqueEdges[j].v2;
+
+			glm::vec2 v1_map = map[v1].image;
+			glm::vec2 u1_map = map[u1].image;
+			glm::vec2 v2_map = map[v2].image;
+			glm::vec2 u2_map = map[u2].image;
+
+			if (glm::distance(v1_map, v2_map) < mergeDistance) {
+				Equalize(v1, v2);
+			}
+			else if (glm::distance(v1_map, u2_map) < mergeDistance) {
+				Equalize(v1, u2);
+			}
+
+			if (glm::distance(u1_map, v2_map) < mergeDistance) {
+				Equalize(u1, v2);
+			} else if (glm::distance(u1_map, u2_map) < mergeDistance) {
+				Equalize(u1, u2);
+			}
+		}
+	}
+	
+	fixUniqueEdges();
 }
 
 bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBound = false, int* bound1 = nullptr, int* bound2 = nullptr)
@@ -397,25 +441,33 @@ void HarmonicMapper::fixUniqueEdges()
 
 	for (size_t i = 0; i < uniqueEdges.size() - 1; i++)
 	{
+		if (uniqueEdges[i].v1 == uniqueEdges[i].v2) {
+			uniqueEdges[i].v1 = -1;
+			continue;
+		}
+
 		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
 		{
 			if (uniqueEdges[i].equals(uniqueEdges[j])) {
 				uniqueEdges[j].v1 = -1;
-
-				if (j < firstTargetIndex) {
-					firstTargetIndex--;
-				}
-				if (j < firstExtraIndex) {
-					firstExtraIndex--;
-				}
 
 				//std::cout << "remove " << j << "; firstTargetIndex = " << firstTargetIndex << "; firstExtraIndex = " << firstExtraIndex << std::endl;
 			}
 		}
 	}
 
+	int i = 0;
+
 	for (auto it = uniqueEdges.begin(); it != uniqueEdges.end();)
 	{
+		if (i < firstTargetIndex) {
+			firstTargetIndex--;
+		}
+
+		if (i < firstExtraIndex) {
+			firstExtraIndex--;
+		}
+
 		if (it->v1 == -1)
 		{
 			it = uniqueEdges.erase(it);
@@ -423,6 +475,7 @@ void HarmonicMapper::fixUniqueEdges()
 		}
 
 		it++;
+		i++;
 	}
 
 	std::cout << uniqueEdges.size() << std::endl;
@@ -599,9 +652,10 @@ void HarmonicMapper::Equalize(int v1, int v2)
 		if (uniqueEdges[i].v2 == v2) {
 			uniqueEdges[i].v2 = v1;
 		}
+		uniqueEdges[i].type = VertexType::Merged;
 	}
 
-	fixUniqueEdges();
+	//fixUniqueEdges();
 }
 
 bool HarmonicMapper::hasEdge(int v1, int v2) {
