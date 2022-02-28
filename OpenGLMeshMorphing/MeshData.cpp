@@ -142,7 +142,9 @@ void MeshData::initVertices()
 
 		for (size_t j = 0; j < vertexCount; j++)
 		{
-			if (glm::distance2(mesh.vertices[i].position, mesh.vertices[j].position) < EPSILON) {
+			glm::vec3 pos1 = mesh.vertices[i].position;
+			glm::vec3 pos2 = mesh.vertices[j].position;
+			if (glm::distance2(pos1, pos2) < EPSILON) {
 				data.eqClass = j;
 				eqClassesSet.insert(j);
 				break;
@@ -765,6 +767,17 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
 		//std::cout << "read2 " << i + 2 << std::endl;
 
 		if (s > -EPSILON && t > -EPSILON && 1 - s - t > -EPSILON) {
+
+			if (area < 0.0f) {
+				std::cout << "ERROR: findVertexPos: area is negative! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
+			}
+
+			if (s < 0.0f || t < 0.0f) {
+				std::cout << "ERROR: findVertexPos: coordinates are negative! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
+			}
+
+			//std::cout << "{area = " << area << ", s = " << s << ", t = " << t << ", s + t = " << s + t << "}" << std::endl;
+
 			return v1 + (v2 - v1) * s + (v3 - v1) * t;
 		}
 	}
@@ -777,38 +790,46 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 
 	float pi = glm::pi<float>();
 
-	for (size_t i = 0; i < borderVertices.size(); i++)
-	{
-		int j = (i + 1) % borderVertices.size();
+	std::cout << "looking for position..." << std::endl;
 
-		float phi1 = borderVertices[i].phi;
-		float phi2 = borderVertices[j].phi;
+	int i = 0;
+	while (i++ < 2) {
+		for (size_t i = 0; i < borderVertices.size(); i++)
+		{
+			int j = (i + 1) % borderVertices.size();
 
-		while (phi1 >= pi * 2.0f) {
-			phi1 -= pi * 2.0f;
+			float phi1 = borderVertices[i].phi;
+			float phi2 = borderVertices[j].phi;
+
+			while (phi1 >= pi * 2.0f) {
+				phi1 -= pi * 2.0f;
+			}
+
+			while (phi2 >= pi * 2.0f) {
+				phi2 -= pi * 2.0f;
+			}
+
+			while (phi1 < 0.0f) {
+				phi1 += pi * 2.0f;
+			}
+
+			while (phi2 < 0.0f) {
+				phi2 += pi * 2.0f;
+			}
+
+			while (phi2 < phi1) {
+				phi2 += pi * 2.0f;
+			}
+
+			std::cout << phi1 << " < " << phi << " < " << phi2 << std::endl;
+			if (phi1 <= phi && phi <= phi2) {
+				float t = (phi - phi1) / (phi2 - phi1);
+				return vertices[borderVertices[j].eqClass].vertex.position * t +
+					vertices[borderVertices[i].eqClass].vertex.position * (1.0f - t);
+			}
 		}
 
-		while (phi2 >= pi * 2.0f) {
-			phi2 -= pi * 2.0f;
-		}
-
-		while (phi1 < 0.0f) {
-			phi1 += pi * 2.0f;
-		}
-
-		while (phi2 < 0.0f) {
-			phi2 += pi * 2.0f;
-		}
-
-		while (phi2 < phi1) {
-			phi2 += pi * 2.0f;
-		}
-
-		if (phi1 <= phi && phi <= phi2) {
-			float t = (phi - phi1) / (phi2 - phi1);
-			return vertices[borderVertices[j].eqClass].vertex.position * t +
-				vertices[borderVertices[i].eqClass].vertex.position * (1.0f - t);
-		}
+		phi += pi * 2.0f;
 	}
 
 	std::cout << "border position isn't found :c" << std::endl;

@@ -45,20 +45,20 @@ int main()
 	//std::string targetModelPath = "/Resources/models/pyramide2/pyramide2.gltf";
 	//std::string sourceModelPath = "/Resources/models/pyramide3/pyramide3.gltf";
 	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
-	std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
-	std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
-	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
-	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
+	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
 	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
 	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
 
-	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	//MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
 	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
+	MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
+	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
+	//MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
 
 	sourceData.init();
 	targetData.init();
@@ -252,3 +252,42 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 
 	meshShader.Delete();
 }
+
+//void draw_wired_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera) {
+//	Shader debugShader("dot.vert", "dot.frag", false);
+//	debugShader.Activate();
+//
+//	glUniform4f(glGetUniformLocation(meshShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+//	glUniform3f(glGetUniformLocation(meshShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+//
+//	glEnable(GL_DEPTH_TEST);
+//
+//	Shader superShader("super.vert", "super.frag", true);
+//	SuperMesh* superMesh = mapper->generateSuperMesh();
+//
+//	superShader.Activate();
+//
+//	std::cout << "Super mesh vertices amount = " << superMesh->vertices.size() << std::endl;
+//	std::cout << "Super mesh indices amount = " << superMesh->indices.size() << std::endl;
+//
+//	glUniform4f(glGetUniformLocation(superShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+//	glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+//
+//	glEnable(GL_DEPTH_TEST);
+//
+//	while (!glfwWindowShouldClose(window))
+//	{
+//		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//
+//		camera.Inputs(window);
+//		camera.updateMatrix(45.0f, 0.1f, 100.0f);
+//
+//		glUniform1f(glGetUniformLocation(superShader.ID, "t"), camera.t);
+//		(*superMesh).Draw(superShader, camera);
+//		glfwSwapBuffers(window);
+//		glfwPollEvents();
+//	}
+//
+//	meshShader.Delete();
+//}

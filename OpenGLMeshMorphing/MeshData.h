@@ -135,7 +135,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::One;
+	CoeffType coeffType = CoeffType::MVC;
 
 	int vertexCount;
 	int edgesCount;

@@ -45,7 +45,7 @@ void HarmonicMapper::init()
 	initMap();
 	initEdges();
 	fixMapBound();
-	mergeCloseVertices();
+	//mergeCloseVertices();
 	fixIntersections();
 	clearMap();
 	//retriangulate();
@@ -265,21 +265,55 @@ void HarmonicMapper::mergeCloseVertices() {
 			int v2 = uniqueEdges[j].v1;
 			int u2 = uniqueEdges[j].v2;
 
+			bool iIsBorder = uniqueEdges[i].isBorder;
+			bool jIsBorder = uniqueEdges[j].isBorder;
+
 			glm::vec2 v1_map = map[v1].image;
 			glm::vec2 u1_map = map[u1].image;
 			glm::vec2 v2_map = map[v2].image;
 			glm::vec2 u2_map = map[u2].image;
 
 			if (glm::distance(v1_map, v2_map) < mergeDistance) {
+				if (iIsBorder) {
+					map[v2].image = map[v1].image;
+				} else if (jIsBorder) {
+					map[v1].image = map[v2].image;
+				} else {
+					glm::vec2 avgPos = (map[v1].image + map[v2].image) / 2.0f;
+					map[v1].image = map[v2].image = avgPos;
+				}
 				Equalize(v1, v2);
-			}
-			else if (glm::distance(v1_map, u2_map) < mergeDistance) {
+			} else if (glm::distance(v1_map, u2_map) < mergeDistance) {
+				if (iIsBorder) {
+					map[u2].image = map[v1].image;
+				} else if (jIsBorder) {
+					map[v1].image = map[u2].image;
+				} else {
+					glm::vec2 avgPos = (map[v1].image + map[u2].image) / 2.0f;
+					map[v1].image = map[u2].image = avgPos;
+				}
 				Equalize(v1, u2);
 			}
 
 			if (glm::distance(u1_map, v2_map) < mergeDistance) {
+				if (iIsBorder) {
+					map[u1].image = map[v2].image;
+				} else if (jIsBorder) {
+					map[v2].image = map[u1].image;
+				} else {
+					glm::vec2 avgPos = (map[u1].image + map[v2].image) / 2.0f;
+					map[u1].image = map[v2].image = avgPos;
+				}
 				Equalize(u1, v2);
 			} else if (glm::distance(u1_map, u2_map) < mergeDistance) {
+				if (iIsBorder) {
+					map[u1].image = map[u2].image;
+				} else if (jIsBorder) {
+					map[u2].image = map[u1].image;
+				} else {
+					glm::vec2 avgPos = (map[u1].image + map[u2].image) / 2.0f;
+					map[u1].image = map[u2].image = avgPos;
+				}
 				Equalize(u1, u2);
 			}
 		}
@@ -358,7 +392,7 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					dPos = finalMorphMap[d].tarPos;
 
 					me.srcPos = aPos * (1.0f - t1) + bPos * t1;
-					me.tarPos = cPos * (1.0f - t1) + dPos * t1;
+					me.tarPos = cPos * (1.0f - t2) + dPos * t2;
 
 				} else {
 					aPos = finalMorphMap[a].tarPos;
@@ -367,7 +401,7 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					dPos = finalMorphMap[d].srcPos;
 
 					me.tarPos = aPos * (1.0f - t1) + bPos * t1;
-					me.srcPos = cPos * (1.0f - t1) + dPos * t1;
+					me.srcPos = cPos * (1.0f - t2) + dPos * t2;
 				}
 
 				finalMorphMap[centerIndex] = me;
@@ -652,7 +686,7 @@ void HarmonicMapper::Equalize(int v1, int v2)
 		if (uniqueEdges[i].v2 == v2) {
 			uniqueEdges[i].v2 = v1;
 		}
-		uniqueEdges[i].type = VertexType::Merged;
+		//uniqueEdges[i].type = VertexType::Merged;
 	}
 
 	//fixUniqueEdges();
@@ -674,6 +708,9 @@ bool HarmonicMapper::hasEdge(int v1, int v2) {
 SuperMesh* HarmonicMapper::generateSuperMesh() {
 
 	std::cout << "generating super mesh..." << std::endl;
+	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
+	fixUniqueEdges();
+	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
 	std::vector <SuperVertex> * vertices = new std::vector <SuperVertex>();
 	std::vector <GLuint> * indices = new std::vector <GLuint>();
 	std::cout << "vectors created successfully!" << std::endl;
@@ -702,6 +739,13 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 				auto e3 = uniqueEdges[k];
 
 				if (e1.isTriangle(e2, e3)) {
+					int v3_ind = 0;
+					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
+						v3_ind = e3.v1;
+					}
+					else {
+						v3_ind = e3.v2;
+					}
 
 					SuperVertex v1;
 					v1.position1 = finalMorphMap[e1.v1].srcPos;
@@ -712,19 +756,26 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 					v2.position2 = finalMorphMap[e1.v2].tarPos;
 
 					SuperVertex v3;
-					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
-						v3.position1 = finalMorphMap[e3.v1].srcPos;
-						v3.position2 = finalMorphMap[e3.v1].tarPos;
-					} else {
-						v3.position1 = finalMorphMap[e3.v2].srcPos;
-						v3.position2 = finalMorphMap[e3.v2].tarPos;
-					}
+					v3.position1 = finalMorphMap[v3_ind].srcPos;
+					v3.position2 = finalMorphMap[v3_ind].tarPos;
+
 					vertices->push_back(v1);
 					indices->push_back(vertices->size() - 1);
-					vertices->push_back(v2);
-					indices->push_back(vertices->size() - 1);
-					vertices->push_back(v3);
-					indices->push_back(vertices->size() - 1);
+
+					if (isClockWise(map[e1.v1].image, map[e1.v2].image, map[v3_ind].image)) {
+						vertices->push_back(v2);
+						indices->push_back(vertices->size() - 1);
+						vertices->push_back(v3);
+						indices->push_back(vertices->size() - 1);
+						std::cout << "clockwise ";
+					}
+					else {
+						vertices->push_back(v3);
+						indices->push_back(vertices->size() - 1);
+						vertices->push_back(v2);
+						indices->push_back(vertices->size() - 1);
+						std::cout << "counter-clockwise ";
+					}
 
 					std::cout << ++n << std::endl;
 
@@ -752,4 +803,8 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 	std::cout << "Super mesh generated successfully!" << std::endl;
 
 	return superMesh;
+}
+
+bool HarmonicMapper::isClockWise(glm::vec2 a, glm::vec2 b, glm::vec2 c) {
+	return ((b.x * c.y) - (b.y * c.x)) - ((a.x * c.y) - (a.y * c.x)) + ((a.x * b.y) - (a.y * b.x)) < 0.0f;
 }
