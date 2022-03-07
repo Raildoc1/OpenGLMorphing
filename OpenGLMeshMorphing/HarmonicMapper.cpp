@@ -74,7 +74,8 @@ void HarmonicMapper::initMap()
 		if (!x.second.border) {
 			e.tarPos = target->findVertexPos(x.second.image);
 			//e.tarPos = glm::vec3(0.0f);
-		} else {
+		}
+		else {
 			e.tarPos = target->findBorderPos(x.second.phi);
 		}
 
@@ -100,7 +101,8 @@ void HarmonicMapper::initMap()
 			e.srcPos = source->findVertexPos(x.second.image);
 			//e.srcPos = source->findVertexPos(x.second.image);
 			//e.srcPos = glm::vec3(0.0f);
-		} else {
+		}
+		else {
 			e.srcPos = source->findBorderPos(x.second.phi);
 		}
 
@@ -113,9 +115,7 @@ void HarmonicMapper::initEdges()
 	for (auto const& x : source->uniqueEdges)
 	{
 		UniqueEdgeData temp = x;
-		temp.type = VertexType::Source;
-		temp.baseEqClass1 = temp.v1;
-		temp.baseEqClass2 = temp.v2;
+		temp.v1.type = temp.v2.type = temp.type = VertexType::Source;
 		uniqueEdges.push_back(temp);
 	}
 
@@ -125,11 +125,9 @@ void HarmonicMapper::initEdges()
 	for (auto const& x : target->uniqueEdges)
 	{
 		UniqueEdgeData temp = x;
-		temp.baseEqClass1 = temp.v1;
-		temp.baseEqClass2 = temp.v2;
-		temp.v1 += vertexCount;
-		temp.v2 += vertexCount;
-		temp.type = VertexType::Target;
+		temp.v1.eqClass += vertexCount;
+		temp.v2.eqClass += vertexCount;
+		temp.v1.type = temp.v2.type = temp.type = VertexType::Target;
 		uniqueEdges.push_back(temp);
 	}
 
@@ -140,15 +138,15 @@ void HarmonicMapper::fixMapBound()
 {
 	for (auto const& x : uniqueEdges)
 	{
-		if (!x.isBorder)
+		if (!x.isBorder())
 		{
 			continue;
 		}
 
 		BorderEntity e;
-		e.eqClass = x.v1;
-		e.phi = map[x.v1].phi;
-		e.type = finalMorphMap[x.v1].vertexType;
+		e.eqClass = x.v1.eqClass;
+		e.phi = map[x.v1.eqClass].phi;
+		e.type = finalMorphMap[x.v1.eqClass].vertexType;
 
 		if (border.size() == 0) {
 			border.push_back(e);
@@ -192,7 +190,7 @@ void HarmonicMapper::fixMapBound()
 
 	for (auto it = uniqueEdges.begin(); it != uniqueEdges.end();)
 	{
-		if (!(*it).isBorder)
+		if (!(*it).isBorder())
 		{
 			it++;
 			continue;
@@ -205,14 +203,12 @@ void HarmonicMapper::fixMapBound()
 	{
 		std::cout << border[i].eqClass << " - " << border[i].phi << std::endl;
 
-		UniqueEdgeData e;
 
 		int j = (i + 1) % (border.size());
 
-		e.v1 = border[i].eqClass;
-		e.v2 = border[j].eqClass;
-
-		e.isBorder = true;
+		UniqueVertexData v1 = UniqueVertexData(finalMorphMap[border[i].eqClass].vertexType, border[i].eqClass, true);
+		UniqueVertexData v2 = UniqueVertexData(finalMorphMap[border[j].eqClass].vertexType, border[j].eqClass, true);
+		UniqueEdgeData e(v1, v2);
 
 		uniqueEdges.push_back(e);
 	}
@@ -250,23 +246,23 @@ void HarmonicMapper::fixIntersections()
 void HarmonicMapper::mergeCloseVertices() {
 	for (size_t i = 0; i < uniqueEdges.size() - 1; i++)
 	{
-		if (uniqueEdges[i].isBorder) {
+		if (uniqueEdges[i].isBorder()) {
 			continue;
 		}
 
 		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
 		{
-			if (uniqueEdges[j].isBorder) {
+			if (uniqueEdges[j].isBorder()) {
 				continue;
 			}
 
-			int v1 = uniqueEdges[i].v1;
-			int u1 = uniqueEdges[i].v2;
-			int v2 = uniqueEdges[j].v1;
-			int u2 = uniqueEdges[j].v2;
+			int v1 = uniqueEdges[i].v1.eqClass;
+			int u1 = uniqueEdges[i].v2.eqClass;
+			int v2 = uniqueEdges[j].v1.eqClass;
+			int u2 = uniqueEdges[j].v2.eqClass;
 
-			bool iIsBorder = uniqueEdges[i].isBorder;
-			bool jIsBorder = uniqueEdges[j].isBorder;
+			bool iIsBorder = uniqueEdges[i].isBorder();
+			bool jIsBorder = uniqueEdges[j].isBorder();
 
 			glm::vec2 v1_map = map[v1].image;
 			glm::vec2 u1_map = map[u1].image;
@@ -276,19 +272,24 @@ void HarmonicMapper::mergeCloseVertices() {
 			if (glm::distance(v1_map, v2_map) < mergeDistance) {
 				if (iIsBorder) {
 					map[v2].image = map[v1].image;
-				} else if (jIsBorder) {
+				}
+				else if (jIsBorder) {
 					map[v1].image = map[v2].image;
-				} else {
+				}
+				else {
 					glm::vec2 avgPos = (map[v1].image + map[v2].image) / 2.0f;
 					map[v1].image = map[v2].image = avgPos;
 				}
 				Equalize(v1, v2);
-			} else if (glm::distance(v1_map, u2_map) < mergeDistance) {
+			}
+			else if (glm::distance(v1_map, u2_map) < mergeDistance) {
 				if (iIsBorder) {
 					map[u2].image = map[v1].image;
-				} else if (jIsBorder) {
+				}
+				else if (jIsBorder) {
 					map[v1].image = map[u2].image;
-				} else {
+				}
+				else {
 					glm::vec2 avgPos = (map[v1].image + map[u2].image) / 2.0f;
 					map[v1].image = map[u2].image = avgPos;
 				}
@@ -298,19 +299,24 @@ void HarmonicMapper::mergeCloseVertices() {
 			if (glm::distance(u1_map, v2_map) < mergeDistance) {
 				if (iIsBorder) {
 					map[u1].image = map[v2].image;
-				} else if (jIsBorder) {
+				}
+				else if (jIsBorder) {
 					map[v2].image = map[u1].image;
-				} else {
+				}
+				else {
 					glm::vec2 avgPos = (map[u1].image + map[v2].image) / 2.0f;
 					map[u1].image = map[v2].image = avgPos;
 				}
 				Equalize(u1, v2);
-			} else if (glm::distance(u1_map, u2_map) < mergeDistance) {
+			}
+			else if (glm::distance(u1_map, u2_map) < mergeDistance) {
 				if (iIsBorder) {
 					map[u1].image = map[u2].image;
-				} else if (jIsBorder) {
+				}
+				else if (jIsBorder) {
 					map[u2].image = map[u1].image;
-				} else {
+				}
+				else {
 					glm::vec2 avgPos = (map[u1].image + map[u2].image) / 2.0f;
 					map[u1].image = map[u2].image = avgPos;
 				}
@@ -318,7 +324,7 @@ void HarmonicMapper::mergeCloseVertices() {
 			}
 		}
 	}
-	
+
 	fixUniqueEdges();
 }
 
@@ -326,7 +332,7 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 {
 	for (size_t i = i0; i < i1; i++)
 	{
-		if (uniqueEdges[i].v1 == -1) {
+		if (uniqueEdges[i].v1.type == VertexType::Removed) {
 			//std::cout << "this edge must be deleted" << std::endl;
 			continue;
 		}
@@ -338,15 +344,15 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 				continue;
 			}
 
-			if (uniqueEdges[j].v1 == -1) {
+			if (uniqueEdges[j].v1.type == VertexType::Removed) {
 				//std::cout << "this edge must be deleted" << std::endl;
 				continue;
 			}
 
-			int a = uniqueEdges[i].v1;
-			int b = uniqueEdges[i].v2;
-			int c = uniqueEdges[j].v1;
-			int d = uniqueEdges[j].v2;
+			auto a = uniqueEdges[i].v1;
+			auto b = uniqueEdges[i].v2;
+			auto c = uniqueEdges[j].v1;
+			auto d = uniqueEdges[j].v2;
 
 			glm::vec2 intersection;
 
@@ -365,14 +371,6 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 
 				map[centerIndex] = e;
 
-				UniqueEdgeData e1;
-				UniqueEdgeData e2;
-				UniqueEdgeData e3;
-				UniqueEdgeData e4;
-
-				glm::vec3 center1 = (uniqueEdges[i].pos1 + uniqueEdges[i].pos2) / 2.0f;
-				glm::vec3 center2 = (uniqueEdges[j].pos1 + uniqueEdges[j].pos2) / 2.0f;
-
 				glm::vec3 aPos;
 				glm::vec3 bPos;
 				glm::vec3 cPos;
@@ -385,7 +383,10 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 				me.baseEqClass = centerIndex;
 				me.vertexType = VertexType::Merged;
 
-				if (uniqueEdges[i].type == VertexType::Source) {
+				if (uniqueEdges[i].v1.type == VertexType::Source
+					|| uniqueEdges[i].v2.type == VertexType::Source
+					|| uniqueEdges[j].v1.type == VertexType::Target
+					|| uniqueEdges[j].v2.type == VertexType::Target) {
 					aPos = finalMorphMap[a].srcPos;
 					bPos = finalMorphMap[b].srcPos;
 					cPos = finalMorphMap[c].tarPos;
@@ -394,7 +395,10 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					me.srcPos = aPos * (1.0f - t1) + bPos * t1;
 					me.tarPos = cPos * (1.0f - t2) + dPos * t2;
 
-				} else {
+				} else if (uniqueEdges[i].v1.type == VertexType::Target
+					|| uniqueEdges[i].v2.type == VertexType::Target
+					|| uniqueEdges[j].v1.type == VertexType::Source
+					|| uniqueEdges[j].v2.type == VertexType::Source) {
 					aPos = finalMorphMap[a].tarPos;
 					bPos = finalMorphMap[b].tarPos;
 					cPos = finalMorphMap[c].srcPos;
@@ -403,39 +407,21 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					me.tarPos = aPos * (1.0f - t1) + bPos * t1;
 					me.srcPos = cPos * (1.0f - t2) + dPos * t2;
 				}
+				else {
+					std::cout << "********************* " << i << ": type1 = " << (int)uniqueEdges[i].v1.type << "; type2 = " << (int)uniqueEdges[i].v2.type << std::endl;
+				}
 
 				finalMorphMap[centerIndex] = me;
 
-				e1.v1 = a;
-				e1.v2 = centerIndex;
-				e1.isBorder = uniqueEdges[i].isBorder;
-				e1.pos1 = uniqueEdges[i].pos1;
-				e1.pos2 = center1;
-				e1.type = uniqueEdges[i].type;
+				auto center = UniqueVertexData(VertexType::Merged, centerIndex, false);
 
-				e2.v1 = centerIndex;
-				e2.v2 = b;
-				e2.isBorder = uniqueEdges[i].isBorder;
-				e2.pos1 = center1;
-				e2.pos2 = uniqueEdges[i].pos2;
-				e2.type = uniqueEdges[i].type;
+				UniqueEdgeData e1 = UniqueEdgeData(a, center);
+				UniqueEdgeData e2 = UniqueEdgeData(center, b);
+				UniqueEdgeData e3 = UniqueEdgeData(c, center);
+				UniqueEdgeData e4 = UniqueEdgeData(center, d);
 
-				e3.v1 = c;
-				e3.v2 = centerIndex;
-				e3.isBorder = uniqueEdges[j].isBorder;
-				e3.pos1 = uniqueEdges[j].pos1;
-				e3.pos2 = center2;
-				e3.type = uniqueEdges[j].type;
-
-				e4.v1 = centerIndex;
-				e4.v2 = d;
-				e4.isBorder = uniqueEdges[j].isBorder;
-				e4.pos1 = center2;
-				e4.pos2 = uniqueEdges[j].pos2;
-				e4.type = uniqueEdges[j].type;
-
-				uniqueEdges[i].v1 = -1;
-				uniqueEdges[j].v1 = -1;
+				markEdgeRemoved(i);
+				markEdgeRemoved(j);
 
 				int delta = 0;
 
@@ -476,15 +462,14 @@ void HarmonicMapper::fixUniqueEdges()
 	for (size_t i = 0; i < uniqueEdges.size() - 1; i++)
 	{
 		if (uniqueEdges[i].v1 == uniqueEdges[i].v2) {
-			uniqueEdges[i].v1 = -1;
+			markEdgeRemoved(i);
 			continue;
 		}
 
 		for (size_t j = i + 1; j < uniqueEdges.size(); j++)
 		{
 			if (uniqueEdges[i].equals(uniqueEdges[j])) {
-				uniqueEdges[j].v1 = -1;
-
+				markEdgeRemoved(j);
 				//std::cout << "remove " << j << "; firstTargetIndex = " << firstTargetIndex << "; firstExtraIndex = " << firstExtraIndex << std::endl;
 			}
 		}
@@ -502,7 +487,7 @@ void HarmonicMapper::fixUniqueEdges()
 			firstExtraIndex--;
 		}
 
-		if (it->v1 == -1)
+		if (it->v1.type == VertexType::Removed)
 		{
 			it = uniqueEdges.erase(it);
 			continue;
@@ -533,37 +518,30 @@ void HarmonicMapper::retriangulate()
 				continue;
 			}
 
+			bool intersectionFound = false;
+
 			for (auto const& e : uniqueEdges)
 			{
 				glm::vec2 intersection;
 				if (TryFindIntersection(x.second.image, y.second.image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
-					goto out;
+					intersectionFound = true;
+					break;
 				}
 			}
 
-			UniqueEdgeData e;
-			e.isBorder = false;
-			e.v1 = x.first;
-			e.v2 = y.first;
-			e.pos1 = glm::vec3();
-			e.pos2 = glm::vec3();
+			if (!intersectionFound) {
+				UniqueVertexData v1data = UniqueVertexData(finalMorphMap[x.first].vertexType, x.first, false);
+				UniqueVertexData v2data = UniqueVertexData(finalMorphMap[y.first].vertexType, y.first, false);
+				UniqueEdgeData e = UniqueEdgeData(v1data, v2data);
 
-			uniqueEdges.push_back(e);
+				uniqueEdges.push_back(e);
 
-			std::cout << i++ << std::endl;
-
-		out:;
+				std::cout << i++ << std::endl;
+			}
 		}
 	}
 
-outout:;
-
 	std::cout << "retriangulating finished successfully!" << std::endl;
-	/*std::cout << "new:" << std::endl;
-	for (auto const& e : uniqueEdges)
-	{
-		std::cout << "(" << e.v1 << "," << e.v2 << ")" << std::endl;
-	}*/
 }
 
 void HarmonicMapper::fast_retriangulate()
@@ -574,7 +552,7 @@ void HarmonicMapper::fast_retriangulate()
 
 	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
 	{
-		int triangles_desired_amount = uniqueEdges[i].isBorder ? 1 : 2;
+		int triangles_desired_amount = uniqueEdges[i].isBorder() ? 1 : 2;
 
 		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
@@ -588,13 +566,16 @@ void HarmonicMapper::fast_retriangulate()
 			if (uniqueEdges[i].v1 == uniqueEdges[j].v1) {
 				v1 = uniqueEdges[i].v2;
 				v2 = uniqueEdges[j].v2;
-			} else if (uniqueEdges[i].v1 == uniqueEdges[j].v2) {
+			}
+			else if (uniqueEdges[i].v1 == uniqueEdges[j].v2) {
 				v1 = uniqueEdges[i].v2;
 				v2 = uniqueEdges[j].v1;
-			} else if (uniqueEdges[i].v2 == uniqueEdges[j].v1) {
+			}
+			else if (uniqueEdges[i].v2 == uniqueEdges[j].v1) {
 				v1 = uniqueEdges[i].v1;
 				v2 = uniqueEdges[j].v2;
-			} else {
+			}
+			else {
 				v1 = uniqueEdges[i].v1;
 				v2 = uniqueEdges[j].v1;
 			}
@@ -612,6 +593,8 @@ void HarmonicMapper::fast_retriangulate()
 				continue;
 			}
 
+			bool intersectionFound = false;
+
 			for (auto const& e : uniqueEdges)
 			{
 				auto temp = e;
@@ -622,27 +605,26 @@ void HarmonicMapper::fast_retriangulate()
 				glm::vec2 intersection;
 				if (TryFindIntersection(map[v1].image, map[v2].image, map[e.v1].image, map[e.v2].image, &intersection, false)) {
 					//std::cout << "***out***" << std::endl;
-					goto out1;
+					intersectionFound = true;
+					break;
 				}
 			}
 
-			UniqueEdgeData e;
-			e.isBorder = false;
-			e.v1 = v1;
-			e.v2 = v2;
-			e.pos1 = glm::vec3();
-			e.pos2 = glm::vec3();
+			if (!intersectionFound) {
+				UniqueVertexData v1data = UniqueVertexData(finalMorphMap[v1].vertexType, v1, false);
+				UniqueVertexData v2data = UniqueVertexData(finalMorphMap[v2].vertexType, v2, false);
+				UniqueEdgeData e = UniqueEdgeData(v1data, v2data);
 
-			uniqueEdges.push_back(e);
+				uniqueEdges.push_back(e);
 
-			std::cout << n++ << std::endl;
+				std::cout << n++ << std::endl;
 
-			triangles_desired_amount--;
-			if (triangles_desired_amount <= 0) {
-				break;
+				triangles_desired_amount--;
+				if (triangles_desired_amount <= 0) {
+					break;
+				}
 			}
 
-		out1:;
 		}
 	}
 
@@ -678,13 +660,24 @@ void HarmonicMapper::clearMap()
 
 void HarmonicMapper::Equalize(int v1, int v2)
 {
+	auto type1 = finalMorphMap[v1].vertexType;
+	auto type2 = finalMorphMap[v2].vertexType;
+
+	VertexType mergedType = VertexType::Merged;
+
+	if (type1 == type2) {
+		mergedType = type1;
+	}
+
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
 		if (uniqueEdges[i].v1 == v2) {
-			uniqueEdges[i].v1 = v1;
+			uniqueEdges[i].v1.eqClass = v1;
+			uniqueEdges[i].v1.type = mergedType;
 		}
 		if (uniqueEdges[i].v2 == v2) {
-			uniqueEdges[i].v2 = v1;
+			uniqueEdges[i].v2.eqClass = v1;
+			uniqueEdges[i].v2.type = mergedType;
 		}
 		//uniqueEdges[i].type = VertexType::Merged;
 	}
@@ -693,6 +686,7 @@ void HarmonicMapper::Equalize(int v1, int v2)
 }
 
 bool HarmonicMapper::hasEdge(int v1, int v2) {
+
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
 		if (uniqueEdges[i].v1 == v1 && uniqueEdges[i].v2 == v2) {
@@ -711,8 +705,8 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
 	fixUniqueEdges();
 	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
-	std::vector <SuperVertex> * vertices = new std::vector <SuperVertex>();
-	std::vector <GLuint> * indices = new std::vector <GLuint>();
+	std::vector <SuperVertex>* vertices = new std::vector <SuperVertex>();
+	std::vector <GLuint>* indices = new std::vector <GLuint>();
 	std::cout << "vectors created successfully!" << std::endl;
 
 	int n = 0;
@@ -721,7 +715,7 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 	{
 		auto e1 = uniqueEdges[i];
 
-		int triangles_desired_amount = e1.isBorder ? 1 : 2;
+		int triangles_desired_amount = e1.isBorder() ? 1 : 2;
 
 		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
 		{
@@ -740,7 +734,7 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 
 				if (e1.isTriangle(e2, e3)) {
 					int v3_ind = 0;
-					if (e3.v1 != e1.v1 && e3.v1 != e1.v2) {
+					if (e3.v1.eqClass != e1.v1.eqClass && e3.v1.eqClass != e1.v2.eqClass) {
 						v3_ind = e3.v1;
 					}
 					else {
@@ -807,4 +801,11 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 
 bool HarmonicMapper::isClockWise(glm::vec2 a, glm::vec2 b, glm::vec2 c) {
 	return ((b.x * c.y) - (b.y * c.x)) - ((a.x * c.y) - (a.y * c.x)) + ((a.x * b.y) - (a.y * b.x)) < 0.0f;
+}
+
+void HarmonicMapper::markEdgeRemoved(int v)
+{
+	uniqueEdges[v].v1.type = VertexType::Removed;
+	uniqueEdges[v].v2.type = VertexType::Removed;
+	uniqueEdges[v].type = VertexType::Removed;
 }

@@ -58,6 +58,7 @@ public:
 	void Equalize(int v1, int v2);
 	bool hasEdge(int v1, int v2);
 	bool isClockWise(glm::vec2 a, glm::vec2 b, glm::vec2 c);
+	void markEdgeRemoved(int v);
 
 	SuperMesh* generateSuperMesh();
 };

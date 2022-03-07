@@ -262,13 +262,9 @@ void MeshData::initUniqueEdges()
 {
 	for (size_t i = 0; i < edgesCount; i++)
 	{
-		UniqueEdgeData e;
-
-		e.v1 = edges[i].v1.eqClass;
-		e.v2 = edges[i].v2.eqClass;
-		e.pos1 = edges[i].v1.vertex.position;
-		e.pos2 = edges[i].v2.vertex.position;
-		e.isBorder = edges[i].isBorder;
+		UniqueVertexData v1 = UniqueVertexData(edges[i].v1.eqClass, edges[i].v1.isBorder);
+		UniqueVertexData v2 = UniqueVertexData(edges[i].v2.eqClass, edges[i].v2.isBorder);
+		UniqueEdgeData e = UniqueEdgeData(v1, v2);
 
 		bool isDuplicate = false;
 		for (size_t i = 0; i < uniqueEdges.size(); i++)
@@ -307,8 +303,8 @@ void MeshData::initHarmonicK()
 			int v2 = vertices[mesh.indices[j + 1]].eqClass;
 			int v3 = vertices[mesh.indices[j + 2]].eqClass;
 
-			int e1 = uniqueEdges[i].v1;
-			int e2 = uniqueEdges[i].v2;
+			int e1 = uniqueEdges[i].v1.eqClass;
+			int e2 = uniqueEdges[i].v2.eqClass;
 
 			int k0 = edgeInTriangle(e1, e2, v1, v2, v3);
 
@@ -330,8 +326,8 @@ void MeshData::initHarmonicK()
 		else {
 			float result = 0.0f;
 
-			glm::vec3 vi = uniqueEdges[i].pos1;
-			glm::vec3 vj = uniqueEdges[i].pos2;
+			glm::vec3 vi = vertices[uniqueEdges[i].v1.eqClass].vertex.position;
+			glm::vec3 vj = vertices[uniqueEdges[i].v2.eqClass].vertex.position;
 
 			float lji = glm::distance2(vi, vj);
 
@@ -415,9 +411,9 @@ void MeshData::initHarmonicK()
 			}
 
 			if (coeffType == CoeffType::One) {
-				k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = 1.0f;
+				k[uniqueEdges[i].v1.eqClass][uniqueEdges[i].v2.eqClass] = k[uniqueEdges[i].v2.eqClass][uniqueEdges[i].v1.eqClass] = 1.0f;
 			} else {
-				k[uniqueEdges[i].v1][uniqueEdges[i].v2] = k[uniqueEdges[i].v2][uniqueEdges[i].v1] = result;
+				k[uniqueEdges[i].v1.eqClass][uniqueEdges[i].v2.eqClass] = k[uniqueEdges[i].v2.eqClass][uniqueEdges[i].v1.eqClass] = result;
 			}
 		}
 	}
@@ -442,8 +438,8 @@ void MeshData::initLambda()
 {
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		int i0 = uniqueEdges[i].v1;
-		int i1 = uniqueEdges[i].v2;
+		int i0 = uniqueEdges[i].v1.eqClass;
+		int i1 = uniqueEdges[i].v2.eqClass;
 		float current_k = k[i0][i1];
 
 		lambda[i0][i1] += current_k;
@@ -455,8 +451,8 @@ void MeshData::initLambda()
 				continue;
 			}
 
-			int j0 = uniqueEdges[j].v1;
-			int j1 = uniqueEdges[j].v2;
+			int j0 = uniqueEdges[j].v1.eqClass;
+			int j1 = uniqueEdges[j].v2.eqClass;
 
 			if (j0 == i0 || j0 == i1) {
 				lambda[j0][j1] += current_k;
@@ -581,8 +577,8 @@ void MeshData::initMap()
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		int i0 = uniqueEdges[i].v1;
-		int i1 = uniqueEdges[i].v2;
+		int i0 = uniqueEdges[i].v1.eqClass;
+		int i1 = uniqueEdges[i].v2.eqClass;
 
 		VertexData v1 = vertices[i0];
 		VertexData v2 = vertices[i1];
@@ -671,14 +667,14 @@ float MeshData::calculateMapEnergy()
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		derivatives[uniqueEdges[i].v1] = glm::vec2(0.0f, 0.0f);
-		derivatives[uniqueEdges[i].v2] = glm::vec2(0.0f, 0.0f);
+		derivatives[uniqueEdges[i].v1.eqClass] = glm::vec2(0.0f, 0.0f);
+		derivatives[uniqueEdges[i].v2.eqClass] = glm::vec2(0.0f, 0.0f);
 	}
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
 	{
-		int v1 = uniqueEdges[i].v1;
-		int v2 = uniqueEdges[i].v2;
+		int v1 = uniqueEdges[i].v1.eqClass;
+		int v2 = uniqueEdges[i].v2.eqClass;
 		glm::vec2 delta = k[v1][v2] * (map[v1].image - map[v2].image);
 
 		derivatives[v1] += delta;

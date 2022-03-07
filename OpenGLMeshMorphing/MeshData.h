@@ -3,7 +3,7 @@
 #include <map>
 #include <set>
 
-enum class VertexType { Source, Target, Extra, Merged };
+enum class VertexType { Unknown, Source, Target, Merged, Removed };
 enum class CoeffType { One, DHC, MVC, Kanai };
 
 struct VertexData {
@@ -60,19 +60,44 @@ struct EdgeData {
 	}
 };
 
-struct UniqueEdgeData {
-	int v1;
-	int v2;
+struct UniqueVertexData {
+	VertexType type;
+	int eqClass;
+	bool isBorder;
 
-	glm::vec3 pos1;
-	glm::vec3 pos2;
+	UniqueVertexData(VertexType type, int eqClass, bool isBorder) :
+		type(type),
+		eqClass(eqClass),
+		isBorder(isBorder)
+	{}
+
+	UniqueVertexData(int eqClass, bool isBorder) :
+		type(VertexType::Unknown),
+		eqClass(eqClass),
+		isBorder(isBorder)
+	{}
+
+	bool operator==(const UniqueVertexData& rhs) {
+		return eqClass == rhs.eqClass && type == rhs.type;
+	}
+
+	operator int() const { return eqClass; }
+};
+
+struct UniqueEdgeData {
+	UniqueVertexData v1;
+	UniqueVertexData v2;
 
 	VertexType type;
 
-	int baseEqClass1;
-	int baseEqClass2;
-
-	bool isBorder;
+	UniqueEdgeData(UniqueVertexData v1, UniqueVertexData v2) :
+		v1(v1),
+		v2(v2)
+	{}
+	
+	bool isBorder() const {
+		return v1.isBorder && v2.isBorder;
+	}
 
 	bool equals(UniqueEdgeData& e) {
 		return (v1 == e.v1 && v2 == e.v2) 
@@ -96,30 +121,30 @@ struct UniqueEdgeData {
 	}
 
 	bool isTriangle(UniqueEdgeData& e1, UniqueEdgeData& e2) {
-		if (v1 == e1.v1) {
-			if (e2.v1 == e1.v2 && e2.v2 == v2) {
+		if (v1.eqClass == e1.v1.eqClass) {
+			if (e2.v1.eqClass == e1.v2.eqClass && e2.v2.eqClass == v2.eqClass) {
 				return true;
-			} else if (e2.v1 == v2 && e2.v2 == e1.v2) {
+			} else if (e2.v1.eqClass == v2.eqClass && e2.v2.eqClass == e1.v2.eqClass) {
 				return true;
 			}
-		} else if (v1 == e1.v2) {
-			if (e2.v1 == e1.v1 && e2.v2 == v2) {
+		} else if (v1.eqClass == e1.v2.eqClass) {
+			if (e2.v1.eqClass == e1.v1.eqClass && e2.v2.eqClass == v2.eqClass) {
 				return true;
-			} else if (e2.v1 == v2 && e2.v2 == e1.v1) {
+			} else if (e2.v1.eqClass == v2.eqClass && e2.v2.eqClass == e1.v1.eqClass) {
 				return true;
 			}
 		}
 
-		if (v1 == e2.v1) {
-			if (e1.v1 == e2.v2 && e1.v2 == v2) {
+		if (v1.eqClass == e2.v1.eqClass) {
+			if (e1.v1.eqClass == e2.v2.eqClass && e1.v2.eqClass == v2.eqClass) {
 				return true;
-			} else if (e1.v1 == v2 && e1.v2 == e2.v2) {
+			} else if (e1.v1.eqClass == v2.eqClass && e1.v2.eqClass == e2.v2.eqClass) {
 				return true;
 			}
-		} else if (v1 == e2.v2) {
-			if (e1.v1 == e2.v1 && e1.v2 == v2) {
+		} else if (v1.eqClass == e2.v2.eqClass) {
+			if (e1.v1.eqClass == e2.v1.eqClass && e1.v2.eqClass == v2.eqClass) {
 				return true;
-			} else if (e1.v1 == v2 && e1.v2 == e2.v1) {
+			} else if (e1.v1.eqClass == v2.eqClass && e1.v2.eqClass == e2.v1.eqClass) {
 				return true;
 			}
 		}
@@ -135,7 +160,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::MVC;
+	CoeffType coeffType = CoeffType::Kanai;
 
 	int vertexCount;
 	int edgesCount;
@@ -177,6 +202,8 @@ public:
 	int getEdgesCount() { return edgesCount; }
 	float getBorderLength() { return borderLength; }
 	int getIndicesCount() { return indicesCount; }
+
+	bool isBorder(const UniqueEdgeData& e) { return vertices[e.v1.eqClass].isBorder && vertices[e.v2.eqClass].isBorder; };
 
 	VertexData* vertices;
 	EdgeData* edges;
