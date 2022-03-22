@@ -7,6 +7,7 @@ namespace fs = std::filesystem;
 
 #include "Model.h"
 #include "HarmonicMapper.h"
+#include <ctime>
 #include <glm/gtx/string_cast.hpp>
 
 enum class ViewMode { Super, Map };
@@ -32,7 +33,11 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 
 int main()
 {
+	const clock_t begin_time = clock();
+
 	glfwInit();
+
+	std::cout << "glfwInit finished in " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds." << std::endl;
 
 	GLFWwindow* window = create_window();
 
@@ -47,10 +52,12 @@ int main()
 	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
 	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
-	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
-	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
-	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
-	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
+	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
+	std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
+	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
@@ -71,6 +78,8 @@ int main()
 	}
 
 	glfwSetScrollCallback(window, scroll_callback);
+
+	std::cout << "morphing finished in " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds." << std::endl;
 
 	if (mode == ViewMode::Map) {
 		draw_map(&sourceData, &targetData, &mapper, window, camera);

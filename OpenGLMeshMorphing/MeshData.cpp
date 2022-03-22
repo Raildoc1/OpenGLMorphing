@@ -1,6 +1,10 @@
 #include "MeshData.h"
 #include <filesystem>
 
+void print_time_stamp(const clock_t& prev, const std::string msg) {
+	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
+}
+
 float* solveSLE(float** A, float* b, int n) {
 	float** AA = (float**)calloc(n, sizeof(float*));
 	for (size_t i = 0; i < n; i++)
@@ -9,18 +13,6 @@ float* solveSLE(float** A, float* b, int n) {
 		memcpy(AA[i], A[i], n * sizeof(float));
 		AA[i][n] = b[i];
 	}
-
-	/*std::cout << "AA: " << std::endl;
-
-	for (size_t i = 0; i < n; i++)
-	{
-		for (size_t j = 0; j < n + 1; j++)
-		{
-			std::cout << std::setw(6) << std::setprecision(2) << AA[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;*/
 
 	for (int i = 0; i < n - 1; i++) {
 		for (int h = i + 1; h < n; h++)
@@ -91,14 +83,40 @@ MeshData::~MeshData()
 
 void MeshData::init()
 {
+	clock_t time_stamp = clock();
+
 	initVertices();
+	print_time_stamp(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	initFixedIndices();
+	print_time_stamp(time_stamp, "initFixedIndices finished");
+	time_stamp = clock();
+
 	initEdges();
+	print_time_stamp(time_stamp, "initEdges finished");
+	time_stamp = clock();
+
 	initBorder();
+	print_time_stamp(time_stamp, "initBorder finished");
+	time_stamp = clock();
+
 	initUniqueEdges();
+	print_time_stamp(time_stamp, "initUniqueEdges finished");
+	time_stamp = clock();
+
 	initHarmonicK();
+	print_time_stamp(time_stamp, "initHarmonicK finished");
+	time_stamp = clock();
+
 	initLambda();
+	print_time_stamp(time_stamp, "initLambda finished");
+	time_stamp = clock();
+
 	initMap();
+	print_time_stamp(time_stamp, "initMap finished");
+	time_stamp = clock();
+
 	lastEnergy = calculateMapEnergy();
 
 	initialized = true;
@@ -347,10 +365,10 @@ void MeshData::initHarmonicK()
 					result += (lik1 + ljk1 - lji) / Aijk1;
 
 					if (result < 0.0f) {
-						std::cout << "Alert!" << std::endl;
-						std::cout << "lji = " << lji << std::endl;
-						std::cout << "lik1 = " << lik1 << std::endl;
-						std::cout << "ljk1 = " << ljk1 << std::endl;
+						//std::cout << "Alert!" << std::endl;
+						//std::cout << "lji = " << lji << std::endl;
+						//std::cout << "lik1 = " << lik1 << std::endl;
+						//std::cout << "ljk1 = " << ljk1 << std::endl;
 					}
 				}
 				else if (coeffType == CoeffType::MVC) {
@@ -360,7 +378,7 @@ void MeshData::initHarmonicK()
 					result += glm::tan(alpha / 2.0f) / glm::distance(vi, vj);
 
 					if (result < 0.0f) {
-						std::cout << "Alert!" << std::endl;
+						//std::cout << "Alert!" << std::endl;
 					}
 				}
 				else if (coeffType == CoeffType::DHC) {
@@ -386,10 +404,10 @@ void MeshData::initHarmonicK()
 					result += (lik2 + ljk2 - lji) / Aijk2;
 
 					if (result < 0.0f) {
-						std::cout << "Alert!" << std::endl;
-						std::cout << "lji = " << lji << std::endl;
-						std::cout << "lik2 = " << lik2 << std::endl;
-						std::cout << "ljk2 = " << ljk2 << std::endl;
+						//std::cout << "Alert!" << std::endl;
+						//std::cout << "lji = " << lji << std::endl;
+						//std::cout << "lik2 = " << lik2 << std::endl;
+						//std::cout << "ljk2 = " << ljk2 << std::endl;
 					}
 				}
 				else if (coeffType == CoeffType::MVC) {
@@ -399,7 +417,7 @@ void MeshData::initHarmonicK()
 					result += glm::tan(beta / 2.0f) / glm::distance(vi, vj);
 
 					if (result < 0.0f) {
-						std::cout << "Alert!" << std::endl;
+						//std::cout << "Alert!" << std::endl;
 					}
 				}
 				else if (coeffType == CoeffType::DHC) {
@@ -470,7 +488,7 @@ void MeshData::initLambda()
 
 	}
 
-	std::cout << "lambdas: " << std::endl;
+	//std::cout << "lambdas: " << std::endl;
 	for (size_t i = 0; i < vertexCount; i++)
 	{
 		for (size_t j = 0; j < vertexCount; j++)
@@ -486,7 +504,7 @@ void MeshData::initLambda()
 				std::cout << "lambda = " << lambda[i][j] << " " << k[i][j] << std::endl;
 			}*/
 			if (lambda[i][j] < 0.0f) {
-				std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << std::endl;
+				//std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << std::endl;
 			}
 			//std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << " ";
 		}
@@ -520,7 +538,7 @@ void MeshData::initMap()
 	U = (float*)calloc(looseVerteicesAmount, sizeof(float));
 	V = (float*)calloc(looseVerteicesAmount, sizeof(float));
 
-	std::cout << "Border vertices:" << std::endl;
+	//std::cout << "Border vertices:" << std::endl;
 
 	float currentLength = 0.0f;
 	float dPi = glm::pi<float>() * 2.0f;
@@ -562,7 +580,7 @@ void MeshData::initMap()
 
 		borderVertices.push_back(v);
 
-		std::cout << "phi = " << t << std::endl;
+		//std::cout << "phi = " << t << std::endl;
 	}
 
 	for (size_t i = 0; i < looseVerteicesAmount; i++)
@@ -607,7 +625,7 @@ void MeshData::initMap()
 	u = solveSLE(A, U, looseVerteicesAmount);
 	v = solveSLE(A, V, looseVerteicesAmount);
 
-	std::cout << "u: ";
+	/*std::cout << "u: ";
 	for (size_t i = 0; i < looseVerteicesAmount; i++)
 	{
 		std::cout << u[i] << " ";
@@ -619,7 +637,7 @@ void MeshData::initMap()
 	{
 		std::cout << v[i] << " ";
 	}
-	std::cout << std::endl;
+	std::cout << std::endl;*/
 
 	//std::cout << "Border length: " << getBorderLength() << std::endl;
 

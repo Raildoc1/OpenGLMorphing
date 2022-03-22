@@ -94,6 +94,12 @@ struct UniqueEdgeData {
 		v1(v1),
 		v2(v2)
 	{}
+
+	UniqueEdgeData(VertexType type, UniqueVertexData v1, UniqueVertexData v2) :
+		type(type),
+		v1(v1),
+		v2(v2)
+	{}
 	
 	bool isBorder() const {
 		return v1.isBorder && v2.isBorder;
@@ -160,7 +166,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::Kanai;
+	CoeffType coeffType = CoeffType::MVC;
 
 	int vertexCount;
 	int edgesCount;

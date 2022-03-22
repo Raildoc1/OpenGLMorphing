@@ -1,5 +1,10 @@
 #include "HarmonicMapper.h"
 #include <glm/gtx/string_cast.hpp>
+#include <filesystem>
+
+void print_time(const clock_t& prev, const std::string msg) {
+	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
+}
 
 HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 {
@@ -42,14 +47,34 @@ bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, 
 
 void HarmonicMapper::init()
 {
+	clock_t time_stamp = clock();
+
 	initMap();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	initEdges();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	fixMapBound();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	//mergeCloseVertices();
 	fixIntersections();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+	
 	clearMap();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	//retriangulate();
 	fast_retriangulate();
+	print_time(time_stamp, "initVertices finished");
+	time_stamp = clock();
+
 	initialized = true;
 }
 
@@ -116,6 +141,7 @@ void HarmonicMapper::initEdges()
 	{
 		UniqueEdgeData temp = x;
 		temp.v1.type = temp.v2.type = temp.type = VertexType::Source;
+		temp.type = VertexType::Source;
 		uniqueEdges.push_back(temp);
 	}
 
@@ -128,6 +154,7 @@ void HarmonicMapper::initEdges()
 		temp.v1.eqClass += vertexCount;
 		temp.v2.eqClass += vertexCount;
 		temp.v1.type = temp.v2.type = temp.type = VertexType::Target;
+		temp.type = VertexType::Target;
 		uniqueEdges.push_back(temp);
 	}
 
@@ -383,10 +410,15 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 				me.baseEqClass = centerIndex;
 				me.vertexType = VertexType::Merged;
 
+				VertexType abType = VertexType::Unknown;
+				VertexType cdType = VertexType::Unknown;
+
 				if (uniqueEdges[i].v1.type == VertexType::Source
 					|| uniqueEdges[i].v2.type == VertexType::Source
+					|| uniqueEdges[i].type == VertexType::Source
 					|| uniqueEdges[j].v1.type == VertexType::Target
-					|| uniqueEdges[j].v2.type == VertexType::Target) {
+					|| uniqueEdges[j].v2.type == VertexType::Target
+					|| uniqueEdges[j].type == VertexType::Target ) {
 					aPos = finalMorphMap[a].srcPos;
 					bPos = finalMorphMap[b].srcPos;
 					cPos = finalMorphMap[c].tarPos;
@@ -395,10 +427,15 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					me.srcPos = aPos * (1.0f - t1) + bPos * t1;
 					me.tarPos = cPos * (1.0f - t2) + dPos * t2;
 
+					abType = VertexType::Source;
+					cdType = VertexType::Target;
+
 				} else if (uniqueEdges[i].v1.type == VertexType::Target
 					|| uniqueEdges[i].v2.type == VertexType::Target
+					|| uniqueEdges[i].type == VertexType::Target
 					|| uniqueEdges[j].v1.type == VertexType::Source
-					|| uniqueEdges[j].v2.type == VertexType::Source) {
+					|| uniqueEdges[j].v2.type == VertexType::Source
+					|| uniqueEdges[j].type == VertexType::Source) {
 					aPos = finalMorphMap[a].tarPos;
 					bPos = finalMorphMap[b].tarPos;
 					cPos = finalMorphMap[c].srcPos;
@@ -406,6 +443,9 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 
 					me.tarPos = aPos * (1.0f - t1) + bPos * t1;
 					me.srcPos = cPos * (1.0f - t2) + dPos * t2;
+
+					abType = VertexType::Target;
+					cdType = VertexType::Source;
 				}
 				else {
 					std::cout << "********************* " << i << ": type1 = " << (int)uniqueEdges[i].v1.type << "; type2 = " << (int)uniqueEdges[i].v2.type << std::endl;
@@ -415,10 +455,10 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 
 				auto center = UniqueVertexData(VertexType::Merged, centerIndex, false);
 
-				UniqueEdgeData e1 = UniqueEdgeData(a, center);
-				UniqueEdgeData e2 = UniqueEdgeData(center, b);
-				UniqueEdgeData e3 = UniqueEdgeData(c, center);
-				UniqueEdgeData e4 = UniqueEdgeData(center, d);
+				UniqueEdgeData e1 = UniqueEdgeData(abType, a, center);
+				UniqueEdgeData e2 = UniqueEdgeData(abType, center, b);
+				UniqueEdgeData e3 = UniqueEdgeData(cdType, c, center);
+				UniqueEdgeData e4 = UniqueEdgeData(cdType, center, d);
 
 				markEdgeRemoved(i);
 				markEdgeRemoved(j);
