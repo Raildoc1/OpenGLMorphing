@@ -1,5 +1,8 @@
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+
 #include "MeshData.h"
 #include <filesystem>
+#include <Eigen/Dense>
 
 void print_time_stamp(const clock_t& prev, const std::string msg) {
 	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
@@ -619,27 +622,32 @@ void MeshData::initMap()
 		}
 	}
 
-	float* u = (float*)calloc(looseVerteicesAmount, sizeof(float));
-	float* v = (float*)calloc(looseVerteicesAmount, sizeof(float));
+	Eigen::MatrixXf m(looseVerteicesAmount, looseVerteicesAmount);
+	Eigen::VectorXf a(looseVerteicesAmount);
+	Eigen::VectorXf b(looseVerteicesAmount);
 
-	u = solveSLE(A, U, looseVerteicesAmount);
-	v = solveSLE(A, V, looseVerteicesAmount);
-
-	/*std::cout << "u: ";
 	for (size_t i = 0; i < looseVerteicesAmount; i++)
 	{
-		std::cout << u[i] << " ";
+		for (size_t j = 0; j < looseVerteicesAmount; j++)
+		{
+			m(i,j) = A[i][j];
+		}
+		a(i) = U[i];
+		b(i) = V[i];
 	}
-	std::cout << std::endl;
 
-	std::cout << "v: ";
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		std::cout << v[i] << " ";
-	}
-	std::cout << std::endl;*/
+	std::cout << "loose vertices amount = " << looseVerteicesAmount << std::endl;
 
-	//std::cout << "Border length: " << getBorderLength() << std::endl;
+	clock_t time_stamp = clock();
+
+	Eigen::HouseholderQR<Eigen::MatrixXf> hqr = m.householderQr();
+	Eigen::VectorXf u = hqr.solve(a);
+	Eigen::VectorXf v = hqr.solve(b);
+
+	//u = solveSLE(A, U, looseVerteicesAmount);
+	//v = solveSLE(A, V, looseVerteicesAmount);
+
+	print_time_stamp(time_stamp, "partialPivLu SLE solutions found");
 
 	for (size_t i = 0; i < getVertexCount(); i++)
 	{

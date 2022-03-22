@@ -1,3 +1,5 @@
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+
 //------- Ignore this ----------
 #include<filesystem>
 namespace fs = std::filesystem;
@@ -10,6 +12,8 @@ namespace fs = std::filesystem;
 #include <ctime>
 #include <glm/gtx/string_cast.hpp>
 
+#include <Eigen/Dense>
+
 enum class ViewMode { Super, Map };
 
 const unsigned int width = 1000;
@@ -17,10 +21,10 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Super
+#define mode           ViewMode::Map
 #define draw_src_map   true
 #define draw_tar_map   true
-#define draw_super_map true
+#define draw_super_map false
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -31,8 +35,7 @@ GLFWwindow* create_window();
 void draw_map(MeshData* src, MeshData* tar, HarmonicMapper* mapper, GLFWwindow* window, Camera& camera);
 void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera);
 
-int main()
-{
+int main() {
 	const clock_t begin_time = clock();
 
 	glfwInit();
@@ -54,9 +57,9 @@ int main()
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
 	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
 	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
-	std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
+	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
 	std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
-	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
