@@ -21,10 +21,10 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Map
+#define mode           ViewMode::Super
 #define draw_src_map   true
 #define draw_tar_map   true
-#define draw_super_map false
+#define draw_super_map true
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -55,11 +55,11 @@ int main() {
 	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
 	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
-	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
-	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
 	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
-	std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
-	std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
+	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());

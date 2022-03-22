@@ -263,4 +263,5 @@ Blog
 About
 *.pdb
 
-OpenGLMeshMorpginf\.vs\*
+OpenGLMeshMorphing/.vs/*
+OpenGLMeshMorphing/x64/*

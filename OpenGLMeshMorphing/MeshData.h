@@ -181,9 +181,6 @@ private:
 	std::vector<BorderVertex> borderVertices;
 	std::set<int> eqClassesSet;
 
-	float** A;
-	float* U;
-	float* V;
 	int looseVerteicesAmount;
 
 	bool initialized = false;

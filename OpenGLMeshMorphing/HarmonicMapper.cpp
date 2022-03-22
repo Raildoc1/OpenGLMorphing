@@ -228,7 +228,7 @@ void HarmonicMapper::fixMapBound()
 
 	for (size_t i = 0; i < border.size(); i++)
 	{
-		std::cout << border[i].eqClass << " - " << border[i].phi << std::endl;
+		//std::cout << border[i].eqClass << " - " << border[i].phi << std::endl;
 
 
 		int j = (i + 1) % (border.size());
@@ -240,7 +240,7 @@ void HarmonicMapper::fixMapBound()
 		uniqueEdges.push_back(e);
 	}
 
-	std::cout << "Border length: " << border.size() << std::endl;
+	//std::cout << "Border length: " << border.size() << std::endl;
 }
 
 void HarmonicMapper::fixIntersections()
@@ -262,7 +262,9 @@ void HarmonicMapper::fixIntersections()
 	int bound1 = 0;
 	int bound2 = firstExtraIndex;
 	while (fixIntersection(bound1, uniqueEdges.size(), bound2, uniqueEdges.size(), true, &bound1, &bound2)) {
-		std::cout << ++fixAmount << std::endl;
+		if (++fixAmount % 100 == 0) {
+			std::cout << fixAmount << std::endl;
+		}
 	}
 
 	fixUniqueEdges();
@@ -801,17 +803,17 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 						indices->push_back(vertices->size() - 1);
 						vertices->push_back(v3);
 						indices->push_back(vertices->size() - 1);
-						std::cout << "clockwise ";
 					}
 					else {
 						vertices->push_back(v3);
 						indices->push_back(vertices->size() - 1);
 						vertices->push_back(v2);
 						indices->push_back(vertices->size() - 1);
-						std::cout << "counter-clockwise ";
 					}
 
-					std::cout << ++n << std::endl;
+					if (n++ % 100 == 0) {
+						std::cout << n << std::endl;
+					}
 
 					if ((--triangles_desired_amount) <= 0) {
 						goto out;

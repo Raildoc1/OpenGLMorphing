@@ -537,17 +537,13 @@ int MeshData::edgeInTriangle(int e1, int e2, int t1, int t2, int t3)
 
 void MeshData::initMap()
 {
-	A = (float**)calloc(looseVerteicesAmount, sizeof(float*));
-	U = (float*)calloc(looseVerteicesAmount, sizeof(float));
-	V = (float*)calloc(looseVerteicesAmount, sizeof(float));
-
-	//std::cout << "Border vertices:" << std::endl;
+	Eigen::MatrixXf A = Eigen::MatrixXf::Identity(looseVerteicesAmount, looseVerteicesAmount);
+	Eigen::VectorXf U = Eigen::VectorXf::Zero(looseVerteicesAmount);
+	Eigen::VectorXf V = Eigen::VectorXf::Zero(looseVerteicesAmount);
 
 	float currentLength = 0.0f;
 	float dPi = glm::pi<float>() * 2.0f;
 	float borderLength = getBorderLength();
-
-
 
 	for (size_t i = 0; i < border.size(); i++)
 	{
@@ -582,18 +578,6 @@ void MeshData::initMap()
 		v.phi = t;
 
 		borderVertices.push_back(v);
-
-		//std::cout << "phi = " << t << std::endl;
-	}
-
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		A[i] = (float*)calloc(looseVerteicesAmount, sizeof(float));
-	}
-
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		A[i][i] = 1.0f;
 	}
 
 	for (size_t i = 0; i < uniqueEdges.size(); i++)
@@ -617,35 +601,18 @@ void MeshData::initMap()
 			V[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * map[v2.eqClass].image.y;
 		}
 		else {
-			A[v1.setIndex][v2.setIndex] = -lambda[v1.eqClass][v2.eqClass];
-			A[v2.setIndex][v1.setIndex] = -lambda[v2.eqClass][v1.eqClass];
+			A(v1.setIndex, v2.setIndex) = -lambda[v1.eqClass][v2.eqClass];
+			A(v2.setIndex, v1.setIndex) = -lambda[v2.eqClass][v1.eqClass];
 		}
-	}
-
-	Eigen::MatrixXf m(looseVerteicesAmount, looseVerteicesAmount);
-	Eigen::VectorXf a(looseVerteicesAmount);
-	Eigen::VectorXf b(looseVerteicesAmount);
-
-	for (size_t i = 0; i < looseVerteicesAmount; i++)
-	{
-		for (size_t j = 0; j < looseVerteicesAmount; j++)
-		{
-			m(i,j) = A[i][j];
-		}
-		a(i) = U[i];
-		b(i) = V[i];
 	}
 
 	std::cout << "loose vertices amount = " << looseVerteicesAmount << std::endl;
 
 	clock_t time_stamp = clock();
 
-	Eigen::HouseholderQR<Eigen::MatrixXf> hqr = m.householderQr();
-	Eigen::VectorXf u = hqr.solve(a);
-	Eigen::VectorXf v = hqr.solve(b);
-
-	//u = solveSLE(A, U, looseVerteicesAmount);
-	//v = solveSLE(A, V, looseVerteicesAmount);
+	Eigen::HouseholderQR<Eigen::MatrixXf> hqr = A.householderQr();
+	Eigen::VectorXf u = hqr.solve(U);
+	Eigen::VectorXf v = hqr.solve(V);
 
 	print_time_stamp(time_stamp, "partialPivLu SLE solutions found");
 
@@ -666,21 +633,14 @@ void MeshData::initMap()
 			continue;
 		}
 
-		//float t = dPi * eqClass / (float)vertexCount;
-		//std::cout << "t[" << eqClass << "] = " << "(" << t << std::endl;
-
 		MapEntity e;
-		//e.image = 0.5f * glm::vec2(glm::cos(t), glm::sin(t));
 		e.image = glm::vec2(u[vertices[eqClass].setIndex], v[vertices[eqClass].setIndex]);
 		e.locked = false;
 		e.border = false;
 		e.phi = 0.0f;
 
-		//std::cout << "image = " << e.image.x << ", " << e.image.y << std::endl;
-
 		map[eqClass] = e;
 	}
-
 }
 
 float MeshData::calculateMapEnergy()
@@ -843,7 +803,7 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 				phi2 += pi * 2.0f;
 			}
 
-			std::cout << phi1 << " < " << phi << " < " << phi2 << std::endl;
+			//std::cout << phi1 << " < " << phi << " < " << phi2 << std::endl;
 			if (phi1 <= phi && phi <= phi2) {
 				float t = (phi - phi1) / (phi2 - phi1);
 				return vertices[borderVertices[j].eqClass].vertex.position * t +
