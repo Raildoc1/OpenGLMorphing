@@ -317,7 +317,8 @@ public:
 	vector<Triangle> triangles;
 	vector<vector<int>> meshMatrix;
 
-	int*** edgesToTriangles;
+	vector<vector<vector<int>>> edgesToTriangles;
+
 	float** k;
 	float** lambda;
 

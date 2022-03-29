@@ -71,18 +71,7 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	eqClassesSet = set<int>();
 	triangles = vector<Triangle>();
 	meshMatrix = vector<vector<int>>(vertexCount, vector<int>(vertexCount, -1));
-
-	edgesToTriangles = (int***)malloc(vertexCount * sizeof(int**));
-
-	for (size_t i = 0; i < vertexCount; i++)
-	{
-		edgesToTriangles[i] = (int**)malloc(vertexCount * sizeof(int*));
-		for (size_t j = 0; j < vertexCount; j++)
-		{
-			edgesToTriangles[i][j] = (int*)malloc(2 * sizeof(int));
-			edgesToTriangles[i][j][0] = edgesToTriangles[i][j][1] = -1;
-		}
-	}
+	edgesToTriangles = vector<vector<vector<int>>>(vertexCount, vector<vector<int>>(vertexCount, vector<int>(2, -1)));
 }
 
 MeshData::~MeshData()
