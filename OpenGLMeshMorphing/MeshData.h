@@ -26,6 +26,24 @@ struct BorderVertex {
 	float phi;
 };
 
+struct TriangleVertex {
+	int index;
+	glm::vec2 image;
+	bool isBorder;
+
+	TriangleVertex(int index, glm::vec2 image, bool isBorder) :
+		index(index),
+		image(image),
+		isBorder(isBorder)
+	{ }
+
+	TriangleVertex(VertexData vertexData, glm::vec2 image) :
+		index(vertexData.eqClass),
+		image(image),
+		isBorder(vertexData.isBorder)
+	{ }
+};
+
 struct EdgeData {
 	VertexData v1;
 	VertexData v2;
@@ -90,9 +108,19 @@ struct UniqueEdgeData {
 
 	VertexType type;
 
+	int triangle1 = -1;
+	int triangle2 = -1;
+
+	UniqueEdgeData() :
+		v1(UniqueVertexData(-1, false)),
+		v2(UniqueVertexData(-1, false)),
+		type(VertexType::Unknown)
+	{}
+
 	UniqueEdgeData(UniqueVertexData v1, UniqueVertexData v2) :
 		v1(v1),
-		v2(v2)
+		v2(v2),
+		type(VertexType::Unknown)
 	{}
 
 	UniqueEdgeData(VertexType type, UniqueVertexData v1, UniqueVertexData v2) :
@@ -159,6 +187,74 @@ struct UniqueEdgeData {
 	}
 };
 
+struct Triangle {
+	TriangleVertex a;
+	TriangleVertex b;
+	TriangleVertex c;
+
+	std::vector<UniqueEdgeData> edges;
+
+	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c) : a(a), b(b), c(c)
+	{
+		invAr = 1.0f / (-b.image.y * c.image.x + a.image.y * (-b.image.x + c.image.x) + a.image.x * (b.image.y - c.image.y) + b.image.x * c.image.y);
+
+		s1 = a.image.y * c.image.x - a.image.x * c.image.y;
+		s2 = c.image.y - a.image.y;
+		s3 = a.image.x - c.image.x;
+
+		t1 = a.image.x * b.image.y - a.image.y * b.image.x;
+		t2 = a.image.y - b.image.y;
+		t3 = b.image.x - a.image.x;
+
+		UniqueVertexData v1(a.index, a.isBorder);
+		UniqueVertexData v2(b.index, b.isBorder);
+		UniqueVertexData v3(c.index, c.isBorder);
+
+		edges = std::vector<UniqueEdgeData>();
+		edges.push_back(UniqueEdgeData(v1, v2));
+		edges.push_back(UniqueEdgeData(v2, v3));
+		edges.push_back(UniqueEdgeData(v3, v1));
+	}
+
+	void getBarycentricCoordinates(glm::vec2 point, float* s, float* t) {
+		*s = invAr * (s1 + s2 * point.x + s3 * point.y);
+		*t = invAr * (t1 + t2 * point.x + t3 * point.y);
+	}
+
+	bool equals(Triangle& e) const {
+		if (a.index == e.a.index) {
+			if (b.index == e.b.index) {
+				return c.index == e.c.index;
+			}
+			if (b.index == e.c.index) {
+				return c.index == e.b.index;
+			}
+		}
+		if (a.index == e.b.index) {
+			if (b.index == e.a.index) {
+				return c.index == e.c.index;
+			}
+			if (b.index == e.c.index) {
+				return c.index == e.a.index;
+			}
+		}
+		if (a.index == e.c.index) {
+			if (b.index == e.a.index) {
+				return c.index == e.b.index;
+			}
+			if (b.index == e.b.index) {
+				return c.index == e.a.index;
+			}
+		}
+		return false;
+	}
+
+private:
+	float invAr;
+	float s1, s2, s3;
+	float t1, t2, t3;
+};
+
 class MeshData {
 private:
 	const float EPSILON = 0.00001f;
@@ -188,13 +284,14 @@ private:
 
 	void initEdges();
 	void initVertices();
-	void initFixedIndices();
 	void initBorder();
 	void sortBorder();
 	void initUniqueEdges();
 	void initHarmonicK();
 	void initLambda();
 	void initMap();
+	void initTriangles();
+	void initFixedIndices();
 
 	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
 
@@ -210,13 +307,14 @@ public:
 
 	VertexData* vertices;
 	EdgeData* edges;
-	int* triangles;
 
 	std::vector<EdgeData> border;
 	std::vector<UniqueEdgeData> uniqueEdges;
 	std::map<int, MapEntity> map;
 	std::vector<int> vertexSetList;
+	std::vector<Triangle> triangles;
 
+	int*** edgesToTriangles;
 	float** k;
 	float** lambda;
 
@@ -226,6 +324,9 @@ public:
 
 	float tickMap();
 	void harmonizeMap();
-	glm::vec3 findVertexPos(glm::vec2 mapPos);
+	void addTriangleToEdgeMap(int v1, int v2, int triangle);
+	int getOppositeTriangle(int v1, int v2, int triangle);
+	glm::vec3 findVertexPos(glm::vec2 mapPos, int* triangle);
 	glm::vec3 findBorderPos(float phi);
+	int getBorderTriangle(float phi);
 };

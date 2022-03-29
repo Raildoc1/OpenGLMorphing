@@ -39,12 +39,16 @@ public:
 	std::vector<UniqueEdgeData> uniqueEdges;
 	std::vector<BorderEntity> border;
 
+	std::vector<UniqueEdgeData>* source_edges;
+	bool** used_edges;
+
 	HarmonicMapper(MeshData &source, MeshData &target);
 
 	static bool TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively);
 
 	void init();
 	void initMap();
+	void mergeMaps();
 	void initEdges();
 	void fixMapBound();
 	void fixIntersections();

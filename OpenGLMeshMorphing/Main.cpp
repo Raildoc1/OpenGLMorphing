@@ -55,12 +55,18 @@ int main() {
 	//std::string targetModelPath = "/Resources/models/pyramide4/pyramide4.gltf";
 	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
+
 	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
 	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+
 	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
 	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
+
 	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
+
+	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	//std::string targetModelPath = "/Resources/models/Alberd/alberd_low.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());

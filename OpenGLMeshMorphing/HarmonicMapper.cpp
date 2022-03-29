@@ -16,6 +16,31 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 	uniqueEdges = std::vector<UniqueEdgeData>();
 	border = std::vector<BorderEntity>();
 
+	int source_vertex_count = source.getVertexCount();
+	int unique_edges_count = source.uniqueEdges.size();
+
+	source_edges = (std::vector<UniqueEdgeData>*)calloc(source_vertex_count, sizeof(std::vector<UniqueEdgeData>));
+
+	for (size_t i = 0; i < source_vertex_count; i++)
+	{
+		source_edges[i] = std::vector<UniqueEdgeData>();
+	}
+
+	for (size_t i = 0; i < unique_edges_count; i++)
+	{
+		int v1 = source.uniqueEdges[i].v1;
+		int v2 = source.uniqueEdges[i].v2;
+
+		source_edges[v1].push_back(source.uniqueEdges[i]);
+		source_edges[v2].push_back(source.uniqueEdges[i]);
+	}
+
+	used_edges = (bool**)calloc(source_vertex_count, sizeof(bool*));
+	for (size_t i = 0; i < source_vertex_count; i++)
+	{
+		used_edges[i] = (bool*)calloc(source_vertex_count, sizeof(bool));
+	}
+
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
 }
 
@@ -50,29 +75,31 @@ void HarmonicMapper::init()
 	clock_t time_stamp = clock();
 
 	initMap();
-	print_time(time_stamp, "initVertices finished");
+	print_time(time_stamp, "initMap finished");
 	time_stamp = clock();
 
 	initEdges();
-	print_time(time_stamp, "initVertices finished");
+	print_time(time_stamp, "initEdges finished");
 	time_stamp = clock();
 
 	fixMapBound();
-	print_time(time_stamp, "initVertices finished");
+	print_time(time_stamp, "fixMapBound finished");
 	time_stamp = clock();
 
-	//mergeCloseVertices();
+	mergeMaps();
+	print_time(time_stamp, "mergeMaps finished");
+	time_stamp = clock();
+
 	fixIntersections();
-	print_time(time_stamp, "initVertices finished");
-	time_stamp = clock();
-	
-	clearMap();
-	print_time(time_stamp, "initVertices finished");
+	print_time(time_stamp, "fixIntersections finished");
 	time_stamp = clock();
 
-	//retriangulate();
+	clearMap();
+	print_time(time_stamp, "clearMap finished");
+	time_stamp = clock();
+
 	fast_retriangulate();
-	print_time(time_stamp, "initVertices finished");
+	print_time(time_stamp, "retriangulate finished");
 	time_stamp = clock();
 
 	initialized = true;
@@ -95,10 +122,10 @@ void HarmonicMapper::initMap()
 		e.srcPos = source->vertices[i].vertex.position;
 
 		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), -rotation);
+		int triangle;
 
 		if (!x.second.border) {
-			e.tarPos = target->findVertexPos(x.second.image);
-			//e.tarPos = glm::vec3(0.0f);
+			e.tarPos = target->findVertexPos(x.second.image, &triangle);
 		}
 		else {
 			e.tarPos = target->findBorderPos(x.second.phi);
@@ -121,11 +148,10 @@ void HarmonicMapper::initMap()
 		e.tarPos = target->vertices[i].vertex.position;
 
 		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), rotation);
+		int triangle;
 
 		if (!x.second.border) {
-			e.srcPos = source->findVertexPos(x.second.image);
-			//e.srcPos = source->findVertexPos(x.second.image);
-			//e.srcPos = glm::vec3(0.0f);
+			e.srcPos = source->findVertexPos(x.second.image, &triangle);
 		}
 		else {
 			e.srcPos = source->findBorderPos(x.second.phi);
@@ -251,8 +277,10 @@ void HarmonicMapper::fixIntersections()
 
 	std::cout << "Checking (0, " << firstTargetIndex << ") -> (" << firstTargetIndex << ", " << firstExtraIndex << ")" << std::endl;
 
-	while (fixIntersection(0, firstTargetIndex, firstTargetIndex, firstExtraIndex - 1, false, nullptr, nullptr)) {
+	int n = 0;
 
+	while (fixIntersection(0, firstTargetIndex, firstTargetIndex, firstExtraIndex - 1, false, nullptr, nullptr)) {
+		n++;
 	}
 
 	std::cout << "first step finished with " << uniqueEdges.size() << " edges!" << std::endl;
@@ -262,13 +290,14 @@ void HarmonicMapper::fixIntersections()
 	int bound1 = 0;
 	int bound2 = firstExtraIndex;
 	while (fixIntersection(bound1, uniqueEdges.size(), bound2, uniqueEdges.size(), true, &bound1, &bound2)) {
+		n++;
 		if (++fixAmount % 100 == 0) {
-			std::cout << fixAmount << std::endl;
+			//std::cout << fixAmount << std::endl;
 		}
 	}
 
 	fixUniqueEdges();
-	std::cout << "intersections fixed!" << std::endl;
+	std::cout << n << " intersections fixed!" << std::endl;
 	std::cout << "Edges amount = " << uniqueEdges.size() << std::endl;
 }
 
@@ -420,7 +449,7 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					|| uniqueEdges[i].type == VertexType::Source
 					|| uniqueEdges[j].v1.type == VertexType::Target
 					|| uniqueEdges[j].v2.type == VertexType::Target
-					|| uniqueEdges[j].type == VertexType::Target ) {
+					|| uniqueEdges[j].type == VertexType::Target) {
 					aPos = finalMorphMap[a].srcPos;
 					bPos = finalMorphMap[b].srcPos;
 					cPos = finalMorphMap[c].tarPos;
@@ -432,7 +461,8 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 					abType = VertexType::Source;
 					cdType = VertexType::Target;
 
-				} else if (uniqueEdges[i].v1.type == VertexType::Target
+				}
+				else if (uniqueEdges[i].v1.type == VertexType::Target
 					|| uniqueEdges[i].v2.type == VertexType::Target
 					|| uniqueEdges[i].type == VertexType::Target
 					|| uniqueEdges[j].v1.type == VertexType::Source
@@ -542,6 +572,103 @@ void HarmonicMapper::fixUniqueEdges()
 	std::cout << uniqueEdges.size() << std::endl;
 }
 
+void HarmonicMapper::mergeMaps()
+{
+	int n = 0;
+	UniqueVertexData v1 = source->uniqueEdges[0].v1;
+	std::vector<UniqueEdgeData> work_list = std::vector<UniqueEdgeData>();
+	std::vector<UniqueEdgeData> candidate_list = std::vector<UniqueEdgeData>();
+
+	for (auto& e : source_edges[v1])
+	{
+		work_list.push_back(e);
+		used_edges[e.v1][e.v2] = used_edges[e.v2][e.v1] = true;
+	}
+
+	while (work_list.size() > 0) {
+		UniqueEdgeData e_a = work_list.back();
+		work_list.pop_back();
+
+		UniqueVertexData v1 = e_a.v1;
+		UniqueVertexData v2 = e_a.v2;
+
+		if (e_a.isBorder()) {
+			continue;
+		}
+
+		int triangleIndex = -1;
+
+		if (v2.isBorder) {
+			UniqueVertexData temp = v1;
+			v1 = v2;
+			v2 = temp;
+		}
+
+		if (v1.isBorder) {
+			triangleIndex = target->getBorderTriangle(source->map[v1.eqClass].phi);
+		}
+		else {
+			target->findVertexPos(source->map[v1.eqClass].image, &triangleIndex);
+		}
+
+		if (triangleIndex < 0) {
+			std::cout << "no triangle found for vertex { index = " << v1.eqClass << ", isBorder = " << v1.isBorder << "}" << std::endl;
+		}
+
+		if (triangleIndex >= 0) {
+			candidate_list.insert(
+				std::end(candidate_list),
+				std::begin(target->triangles[triangleIndex].edges),
+				std::end(target->triangles[triangleIndex].edges)
+			);
+		}
+
+		while (candidate_list.size() > 0) {
+			UniqueEdgeData e_b = candidate_list.back();
+			candidate_list.pop_back();
+
+			if (e_b.isBorder()) {
+				continue;
+			}
+
+			glm::vec2 intersection;
+
+			if (TryFindIntersection(
+				source->map[v1].image, source->map[v2].image,
+				target->map[e_b.v1].image, target->map[e_b.v2].image,
+				&intersection, true
+			)) {
+				// TODO: intersect
+				n++;
+				int oppositeTriangle = target->getOppositeTriangle(e_b.v1, e_b.v2, triangleIndex);
+
+				if (oppositeTriangle == -1) {
+					continue;
+				}
+
+				for (UniqueEdgeData& e : target->triangles[oppositeTriangle].edges)
+				{
+					if (e.equals(e_b)) {
+						continue;
+					}
+					candidate_list.push_back(e);
+				}
+			}
+		}
+
+		for (auto& e : source_edges[v2])
+		{
+			if (used_edges[e.v1][e.v2]) {
+				continue;
+			}
+
+			work_list.push_back(e);
+			used_edges[e.v1][e.v2] = used_edges[e.v2][e.v1] = true;
+		}
+	}
+	std::cout << "intersections amount = " << n << std::endl;
+}
+
 void HarmonicMapper::retriangulate()
 {
 	std::cout << "retriangulating..." << std::endl;
@@ -578,7 +705,7 @@ void HarmonicMapper::retriangulate()
 
 				uniqueEdges.push_back(e);
 
-				std::cout << i++ << std::endl;
+				//std::cout << i++ << std::endl;
 			}
 		}
 	}
@@ -659,7 +786,7 @@ void HarmonicMapper::fast_retriangulate()
 
 				uniqueEdges.push_back(e);
 
-				std::cout << n++ << std::endl;
+				//std::cout << n++ << std::endl;
 
 				triangles_desired_amount--;
 				if (triangles_desired_amount <= 0) {
@@ -812,7 +939,7 @@ SuperMesh* HarmonicMapper::generateSuperMesh() {
 					}
 
 					if (n++ % 100 == 0) {
-						std::cout << n << std::endl;
+						//std::cout << n << std::endl;
 					}
 
 					if ((--triangles_desired_amount) <= 0) {

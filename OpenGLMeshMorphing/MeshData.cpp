@@ -55,7 +55,6 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
 	k = (float**)calloc(vertexCount, sizeof(float*));
 	lambda = (float**)calloc(vertexCount, sizeof(float*));
-	triangles = (int*)calloc(mesh.indices.size(), sizeof(int));
 
 	for (size_t i = 0; i < vertexCount; i++)
 	{
@@ -70,6 +69,19 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	derivatives = std::map<int, glm::vec2>();
 	borderVertices = std::vector<BorderVertex>();
 	eqClassesSet = std::set<int>();
+	triangles = std::vector<Triangle>();
+
+	edgesToTriangles = (int***)malloc(vertexCount * sizeof(int**));
+
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		edgesToTriangles[i] = (int**)malloc(vertexCount * sizeof(int*));
+		for (size_t j = 0; j < vertexCount; j++)
+		{
+			edgesToTriangles[i][j] = (int*)malloc(2 * sizeof(int));
+			edgesToTriangles[i][j][0] = edgesToTriangles[i][j][1] = -1;
+		}
+	}
 }
 
 MeshData::~MeshData()
@@ -120,9 +132,20 @@ void MeshData::init()
 	print_time_stamp(time_stamp, "initMap finished");
 	time_stamp = clock();
 
+	initTriangles();
+	print_time_stamp(time_stamp, "initTriangles finished");
+	time_stamp = clock();
+
 	lastEnergy = calculateMapEnergy();
 
 	initialized = true;
+}
+
+void MeshData::initFixedIndices()
+{
+	indicesCount = mesh.indices.size();
+	for (size_t i = 0; i < indicesCount; i++)
+		fixedIndices.push_back(vertices[mesh.indices[i]].eqClass);
 }
 
 void MeshData::initEdges()
@@ -193,14 +216,51 @@ void MeshData::initVertices()
 	std::cout << "set size = " << eqClassesSet.size() << std::endl;
 }
 
-void MeshData::initFixedIndices()
+void MeshData::initTriangles()
 {
 	indicesCount = mesh.indices.size();
-	for (size_t i = 0; i < indicesCount; i++)
+	for (size_t i = 0; i < indicesCount; i += 3)
 	{
-		triangles[i] = vertices[mesh.indices[i]].eqClass;
-		fixedIndices.push_back(vertices[mesh.indices[i]].eqClass);
+		VertexData v1 = vertices[fixedIndices[i + 0]];
+		VertexData v2 = vertices[fixedIndices[i + 1]];
+		VertexData v3 = vertices[fixedIndices[i + 2]];
+
+		TriangleVertex a(v1, map[v1.eqClass].image);
+		TriangleVertex b(v2, map[v2.eqClass].image);
+		TriangleVertex c(v3, map[v3.eqClass].image);
+
+		Triangle triangle(a, b, c);
+		triangles.push_back(triangle);
+
+		addTriangleToEdgeMap(v1.eqClass, v2.eqClass, triangles.size() - 1);
+		addTriangleToEdgeMap(v2.eqClass, v3.eqClass, triangles.size() - 1);
+		addTriangleToEdgeMap(v3.eqClass, v1.eqClass, triangles.size() - 1);
 	}
+	std::cout << "faces amount = " << indicesCount / 3 << std::endl;
+}
+
+void MeshData::addTriangleToEdgeMap(int v1, int v2, int triangle)
+{
+	if (edgesToTriangles[v1][v2][0] == -1) {
+		edgesToTriangles[v1][v2][0] = edgesToTriangles[v2][v1][0] = triangle;
+	}
+	else {
+		if (edgesToTriangles[v1][v2][1] != -1) {
+			std::cout << "to many triangles over edge (" << v1 << ", " << v2 << ")" << std::endl;
+		}
+		edgesToTriangles[v1][v2][1] = edgesToTriangles[v2][v1][1] = triangle;
+	}
+}
+
+int MeshData::getOppositeTriangle(int v1, int v2, int triangle)
+{
+	if (edgesToTriangles[v1][v2][0] == triangle) {
+		return edgesToTriangles[v1][v2][1];
+	}
+	else if (edgesToTriangles[v1][v2][1] == triangle) {
+		return edgesToTriangles[v1][v2][0];
+	}
+	return -1;
 }
 
 void MeshData::initBorder()
@@ -261,6 +321,7 @@ void MeshData::initBorder()
 	looseVerteicesAmount = eqClassesSet.size();
 
 	std::cout << "loose verteices amount = " << looseVerteicesAmount << std::endl;
+	std::cout << "border length = " << border.size() << std::endl;
 }
 
 void MeshData::sortBorder()
@@ -283,8 +344,8 @@ void MeshData::initUniqueEdges()
 {
 	for (size_t i = 0; i < edgesCount; i++)
 	{
-		UniqueVertexData v1 = UniqueVertexData(edges[i].v1.eqClass, edges[i].v1.isBorder);
-		UniqueVertexData v2 = UniqueVertexData(edges[i].v2.eqClass, edges[i].v2.isBorder);
+		UniqueVertexData v1 = UniqueVertexData(edges[i].v1.eqClass, vertices[edges[i].v1.eqClass].isBorder);
+		UniqueVertexData v2 = UniqueVertexData(edges[i].v2.eqClass, vertices[edges[i].v2.eqClass].isBorder);
 		UniqueEdgeData e = UniqueEdgeData(v1, v2);
 
 		bool isDuplicate = false;
@@ -433,7 +494,8 @@ void MeshData::initHarmonicK()
 
 			if (coeffType == CoeffType::One) {
 				k[uniqueEdges[i].v1.eqClass][uniqueEdges[i].v2.eqClass] = k[uniqueEdges[i].v2.eqClass][uniqueEdges[i].v1.eqClass] = 1.0f;
-			} else {
+			}
+			else {
 				k[uniqueEdges[i].v1.eqClass][uniqueEdges[i].v2.eqClass] = k[uniqueEdges[i].v2.eqClass][uniqueEdges[i].v1.eqClass] = result;
 			}
 		}
@@ -721,50 +783,44 @@ void MeshData::harmonizeMap()
 	//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 }
 
-glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos) {
-
-	float area = 0.0f;
+glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 	float s = 0.0f;
 	float t = 0.0f;
+	*triangle = -1;
 
-	for (size_t i = 0; i < indicesCount; i += 3)
+	float min_bar = 100.0f;
+	float min_s = 100.0f;
+	float min_t = 100.0f;
+
+	for (size_t i = 0; i < triangles.size(); i++)
 	{
-		glm::vec2 p1 = map[fixedIndices[i + 0]].image;
-		//std::cout << "read1 " << i << std::endl;
-		glm::vec2 p2 = map[fixedIndices[i + 1]].image;
-		//std::cout << "read1 " << i + 1 << std::endl;
-		glm::vec2 p3 = map[fixedIndices[i + 2]].image;
-		//std::cout << "read1 " << i + 2 << std::endl;
+		auto candidate_triangle = triangles[i];
 
-		area = 0.5 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
+		candidate_triangle.getBarycentricCoordinates(mapPos, &s, &t);
 
-		s = 1 / (2 * area) * (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * mapPos.x + (p1.x - p3.x) * mapPos.y);
-		t = 1 / (2 * area) * (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * mapPos.x + (p2.x - p1.x) * mapPos.y);
-
-		glm::vec3 v1 = vertices[fixedIndices[i + 0]].vertex.position;
-		//std::cout << "read2 " << i << std::endl;
-		glm::vec3 v2 = vertices[fixedIndices[i + 1]].vertex.position;
-		//std::cout << "read2 " << i + 1 << std::endl;
-		glm::vec3 v3 = vertices[fixedIndices[i + 2]].vertex.position;
-		//std::cout << "read2 " << i + 2 << std::endl;
+		glm::vec3 v1 = vertices[candidate_triangle.a.index].vertex.position;
+		glm::vec3 v2 = vertices[candidate_triangle.b.index].vertex.position;
+		glm::vec3 v3 = vertices[candidate_triangle.c.index].vertex.position;
 
 		if (s > -EPSILON && t > -EPSILON && 1 - s - t > -EPSILON) {
-
-			if (area < 0.0f) {
-				std::cout << "ERROR: findVertexPos: area is negative! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
-			}
-
 			if (s < 0.0f || t < 0.0f) {
-				std::cout << "ERROR: findVertexPos: coordinates are negative! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
+				std::cout << "ERROR: findVertexPos: coordinates are negative! { s = " << s << ", t = " << t << " }" << std::endl;
 			}
-
-			//std::cout << "{area = " << area << ", s = " << s << ", t = " << t << ", s + t = " << s + t << "}" << std::endl;
-
+			*triangle = i;
 			return v1 + (v2 - v1) * s + (v3 - v1) * t;
+		}
+
+		if (s > -EPSILON && t > -EPSILON) {
+			if (s + t < min_bar) {
+				min_bar = s + t;
+				min_s = s;
+				min_t = t;
+			}
 		}
 	}
 
-	std::cout << "ERROR: findVertexPos: could not find vertex position! {area = " << area << ", s = " << s << ", t = " << t << "}" << std::endl;
+	std::cout << "ERROR: findVertexPos: could not find vertex position! { s = " << s << ", t = " << t << "}" << std::endl;
+	std::cout << "ERROR: min_bar = " << min_bar << ", min_s = " << min_s << ", min_t = " << min_t << std::endl;
 	return glm::vec3(0.0f);
 }
 
@@ -772,7 +828,7 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 
 	float pi = glm::pi<float>();
 
-	std::cout << "looking for position..." << std::endl;
+	//std::cout << "looking for position..." << std::endl;
 
 	int i = 0;
 	while (i++ < 2) {
@@ -817,4 +873,43 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 	std::cout << "border position isn't found :c" << std::endl;
 
 	return glm::vec3();
+}
+
+int MeshData::getBorderTriangle(float phi)
+{
+	float pi = glm::pi<float>();
+
+	for (size_t i = 0; i < borderVertices.size(); i++)
+	{
+		int j = (i + 1) % borderVertices.size();
+
+		float phi1 = borderVertices[i].phi;
+		float phi2 = borderVertices[j].phi;
+
+		while (phi1 >= pi * 2.0f) {
+			phi1 -= pi * 2.0f;
+		}
+
+		while (phi2 >= pi * 2.0f) {
+			phi2 -= pi * 2.0f;
+		}
+
+		while (phi1 < 0.0f) {
+			phi1 += pi * 2.0f;
+		}
+
+		while (phi2 < 0.0f) {
+			phi2 += pi * 2.0f;
+		}
+
+		while (phi2 < phi1) {
+			phi2 += pi * 2.0f;
+		}
+
+		if (phi1 <= phi && phi <= phi2) {
+			return edgesToTriangles[borderVertices[i].eqClass][borderVertices[j].eqClass][0];
+		}
+	}
+
+	return -1;
 }
