@@ -42,6 +42,24 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 	}
 
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
+	nextVertexIndex = lastVertexIndex + 1;
+
+
+	sourceIntersections = std::vector<std::vector<IntersectionEntity>>();
+	targetIntersections = std::vector<std::vector<IntersectionEntity>>();
+
+	std::cout << "harmonic mapper const" << std::endl;
+	for (size_t i = 0; i < source.uniqueEdges.size(); i++)
+	{
+		sourceIntersections.push_back(std::vector<IntersectionEntity>());
+	}
+
+	for (size_t i = 0; i < target.uniqueEdges.size(); i++)
+	{
+		targetIntersections.push_back(std::vector<IntersectionEntity>());
+	}
+
+	std::cout << "harmonic mapper const end" << std::endl;
 }
 
 bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively)
@@ -90,7 +108,8 @@ void HarmonicMapper::init()
 	print_time(time_stamp, "mergeMaps finished");
 	time_stamp = clock();
 
-	fixIntersections();
+	//fixIntersections();
+	fixed_fixIntersections();
 	print_time(time_stamp, "fixIntersections finished");
 	time_stamp = clock();
 
@@ -98,7 +117,7 @@ void HarmonicMapper::init()
 	print_time(time_stamp, "clearMap finished");
 	time_stamp = clock();
 
-	fast_retriangulate();
+	//fast_retriangulate();
 	print_time(time_stamp, "retriangulate finished");
 	time_stamp = clock();
 
@@ -110,7 +129,7 @@ void HarmonicMapper::initMap()
 	//float rotation = glm::pi<float>();
 	float rotation = 0.0f;
 
-	for (auto const& x : source->map)
+	for (auto const& x : source->unitCircleMap)
 	{
 		int i = x.first;
 
@@ -136,7 +155,7 @@ void HarmonicMapper::initMap()
 
 	int vertexCount = source->getVertexCount();
 
-	for (auto const& x : target->map)
+	for (auto const& x : target->unitCircleMap)
 	{
 		int i = x.first;
 
@@ -605,10 +624,10 @@ void HarmonicMapper::mergeMaps()
 		}
 
 		if (v1.isBorder) {
-			triangleIndex = target->getBorderTriangle(source->map[v1.eqClass].phi);
+			triangleIndex = target->getBorderTriangle(source->unitCircleMap[v1.eqClass].phi);
 		}
 		else {
-			target->findVertexPos(source->map[v1.eqClass].image, &triangleIndex);
+			target->findVertexPos(source->unitCircleMap[v1.eqClass].image, &triangleIndex);
 		}
 
 		if (triangleIndex < 0) {
@@ -634,11 +653,15 @@ void HarmonicMapper::mergeMaps()
 			glm::vec2 intersection;
 
 			if (TryFindIntersection(
-				source->map[v1].image, source->map[v2].image,
-				target->map[e_b.v1].image, target->map[e_b.v2].image,
+				source->unitCircleMap[v1].image, source->unitCircleMap[v2].image,
+				target->unitCircleMap[e_b.v1].image, target->unitCircleMap[e_b.v2].image,
 				&intersection, true
 			)) {
-				// TODO: intersect
+				IntersectionEntity in = IntersectionEntity(nextVertexIndex++, intersection);
+
+				sourceIntersections[source->meshMatrix[e_a.v1][e_a.v2]].push_back(in);
+				targetIntersections[target->meshMatrix[e_b.v1][e_b.v2]].push_back(in);
+
 				n++;
 				int oppositeTriangle = target->getOppositeTriangle(e_b.v1, e_b.v2, triangleIndex);
 
@@ -825,6 +848,11 @@ void HarmonicMapper::clearMap()
 		it++;
 	}
 	//std::cout << "map size after = " << map.size() << std::endl;
+}
+
+void HarmonicMapper::fixed_fixIntersections()
+{
+
 }
 
 void HarmonicMapper::Equalize(int v1, int v2)

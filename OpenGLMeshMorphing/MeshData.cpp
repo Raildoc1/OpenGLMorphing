@@ -62,14 +62,15 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 		lambda[i] = (float*)calloc(vertexCount, sizeof(float));
 	}
 
-	border = std::vector<EdgeData>();
-	uniqueEdges = std::vector<UniqueEdgeData>();
-	fixedIndices = std::vector<int>();
-	map = std::map<int, MapEntity>();
-	derivatives = std::map<int, glm::vec2>();
-	borderVertices = std::vector<BorderVertex>();
-	eqClassesSet = std::set<int>();
-	triangles = std::vector<Triangle>();
+	border = vector<EdgeData>();
+	uniqueEdges = vector<UniqueEdgeData>();
+	fixedIndices = vector<int>();
+	unitCircleMap = map<int, MapEntity>();
+	derivatives = map<int, glm::vec2>();
+	borderVertices = vector<BorderVertex>();
+	eqClassesSet = set<int>();
+	triangles = vector<Triangle>();
+	meshMatrix = vector<vector<int>>(vertexCount, vector<int>(vertexCount, -1));
 
 	edgesToTriangles = (int***)malloc(vertexCount * sizeof(int**));
 
@@ -198,7 +199,7 @@ void MeshData::initVertices()
 		vertices[i] = data;
 	}
 
-	std::vector<int> v;
+	vector<int> v;
 	v.reserve(eqClassesSet.size());
 	std::copy(eqClassesSet.begin(), eqClassesSet.end(), std::back_inserter(v));
 
@@ -225,9 +226,9 @@ void MeshData::initTriangles()
 		VertexData v2 = vertices[fixedIndices[i + 1]];
 		VertexData v3 = vertices[fixedIndices[i + 2]];
 
-		TriangleVertex a(v1, map[v1.eqClass].image);
-		TriangleVertex b(v2, map[v2.eqClass].image);
-		TriangleVertex c(v3, map[v3.eqClass].image);
+		TriangleVertex a(v1, unitCircleMap[v1.eqClass].image);
+		TriangleVertex b(v2, unitCircleMap[v2.eqClass].image);
+		TriangleVertex c(v3, unitCircleMap[v3.eqClass].image);
 
 		Triangle triangle(a, b, c);
 		triangles.push_back(triangle);
@@ -358,6 +359,7 @@ void MeshData::initUniqueEdges()
 		}
 
 		if (!isDuplicate) {
+			meshMatrix[e.v1][e.v2] = meshMatrix[e.v2][e.v1] = uniqueEdges.size();
 			uniqueEdges.push_back(e);
 		}
 	}
@@ -539,41 +541,24 @@ void MeshData::initLambda()
 
 			if (j0 == i0 || j0 == i1) {
 				lambda[j0][j1] += current_k;
-				/*if (j0 == 1080 && j1 == 966) {
-					std::cout << lambda[j0][j1] << " " << current_k << std::endl;
-				}*/
 			}
 			else if (j1 == i0 || j1 == i1) {
 				lambda[j1][j0] += current_k;
-				/*if (j1 == 1080 && j0 == 966) {
-					std::cout << lambda[j0][j1] << " " << current_k << std::endl;
-				}*/
 			}
 		}
 
 	}
 
-	//std::cout << "lambdas: " << std::endl;
 	for (size_t i = 0; i < vertexCount; i++)
 	{
 		for (size_t j = 0; j < vertexCount; j++)
 		{
 			if (lambda[i][j] == 0.0f) {
-				//std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
 				continue;
 			}
 
 			lambda[i][j] = k[i][j] / lambda[i][j];
-			//std::cout << std::setw(6) << std::setprecision(2) << lambda[i][j] << " ";
-			/*if (i == 1080 && j == 966) {
-				std::cout << "lambda = " << lambda[i][j] << " " << k[i][j] << std::endl;
-			}*/
-			if (lambda[i][j] < 0.0f) {
-				//std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << std::endl;
-			}
-			//std::cout << "lambda[" << i << "][" << j << "] = " << lambda[i][j] << " ";
 		}
-		//std::cout << std::endl;
 	}
 }
 
@@ -633,7 +618,7 @@ void MeshData::initMap()
 
 		currentLength += border[j].length;
 
-		map[border[j].v1.eqClass] = e;
+		unitCircleMap[border[j].v1.eqClass] = e;
 
 		BorderVertex v;
 		v.eqClass = border[j].v1.eqClass;
@@ -655,12 +640,12 @@ void MeshData::initMap()
 		}
 
 		if (v1.isBorder && !v2.isBorder) {
-			U[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * map[v1.eqClass].image.x;
-			V[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * map[v1.eqClass].image.y;
+			U[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * unitCircleMap[v1.eqClass].image.x;
+			V[v2.setIndex] += lambda[v2.eqClass][v1.eqClass] * unitCircleMap[v1.eqClass].image.y;
 		}
 		else if (!v1.isBorder && v2.isBorder) {
-			U[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * map[v2.eqClass].image.x;
-			V[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * map[v2.eqClass].image.y;
+			U[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * unitCircleMap[v2.eqClass].image.x;
+			V[v1.setIndex] += lambda[v1.eqClass][v2.eqClass] * unitCircleMap[v2.eqClass].image.y;
 		}
 		else {
 			A(v1.setIndex, v2.setIndex) = -lambda[v1.eqClass][v2.eqClass];
@@ -683,9 +668,9 @@ void MeshData::initMap()
 		int eqClass = vertices[i].eqClass;
 		bool duplicate = false;
 
-		for (size_t i = 0; i < map.size(); i++)
+		for (size_t i = 0; i < unitCircleMap.size(); i++)
 		{
-			if (map.count(eqClass) > 0) {
+			if (unitCircleMap.count(eqClass) > 0) {
 				duplicate = true;
 				break;
 			}
@@ -701,7 +686,7 @@ void MeshData::initMap()
 		e.border = false;
 		e.phi = 0.0f;
 
-		map[eqClass] = e;
+		unitCircleMap[eqClass] = e;
 	}
 }
 
@@ -723,14 +708,14 @@ float MeshData::calculateMapEnergy()
 	{
 		int v1 = uniqueEdges[i].v1.eqClass;
 		int v2 = uniqueEdges[i].v2.eqClass;
-		glm::vec2 delta = k[v1][v2] * (map[v1].image - map[v2].image);
+		glm::vec2 delta = k[v1][v2] * (unitCircleMap[v1].image - unitCircleMap[v2].image);
 
 		derivatives[v1] += delta;
 		derivatives[v2] -= delta;
 
 		//std::cout << "derivatives[" << v1 << "] = " << "(" << derivatives[v1].x << ", " << derivatives[v1].y << ") - k[" << v1 << "][" << v2 << "] = " << k[v1][v2] << std::endl;
 
-		result += k[v1][v2] * glm::distance2(map[v1].image, map[v2].image);
+		result += k[v1][v2] * glm::distance2(unitCircleMap[v1].image, unitCircleMap[v2].image);
 	}
 
 	return result / 2.0f;
@@ -747,13 +732,13 @@ float MeshData::tickMap()
 
 	lastEnergy = energy;
 
-	for (auto const& x : map)
+	for (auto const& x : unitCircleMap)
 	{
 		if (x.second.locked) {
 			continue;
 		}
 
-		map[x.first].image -= 0.05f * derivatives[x.first];
+		unitCircleMap[x.first].image -= 0.05f * derivatives[x.first];
 	}
 
 	std::cout << energy << std::endl;

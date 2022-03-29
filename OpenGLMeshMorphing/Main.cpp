@@ -21,7 +21,7 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Super
+#define mode           ViewMode::Map
 #define draw_src_map   true
 #define draw_tar_map   true
 #define draw_super_map true
@@ -154,20 +154,20 @@ void draw_map(MeshData* src, MeshData* tar, HarmonicMapper* mapper, GLFWwindow* 
 	if (draw_src_map) {
 		for (size_t i = 0; i < src_edges_amount; i++, j += 4)
 		{
-			map[j + 0] = src->map[src->uniqueEdges[i].v1].image.x * 0.5f + 0.5f;
-			map[j + 1] = src->map[src->uniqueEdges[i].v1].image.y * 0.5f + 0.5f;
-			map[j + 2] = src->map[src->uniqueEdges[i].v2].image.x * 0.5f + 0.5f;
-			map[j + 3] = src->map[src->uniqueEdges[i].v2].image.y * 0.5f + 0.5f;
+			map[j + 0] = src->unitCircleMap[src->uniqueEdges[i].v1].image.x * 0.5f + 0.5f;
+			map[j + 1] = src->unitCircleMap[src->uniqueEdges[i].v1].image.y * 0.5f + 0.5f;
+			map[j + 2] = src->unitCircleMap[src->uniqueEdges[i].v2].image.x * 0.5f + 0.5f;
+			map[j + 3] = src->unitCircleMap[src->uniqueEdges[i].v2].image.y * 0.5f + 0.5f;
 		}
 	}
 
 	if (draw_tar_map) {
 		for (size_t i = 0; i < tar_edges_amount; i++, j += 4)
 		{
-			map[j + 0] = tar->map[tar->uniqueEdges[i].v1].image.x * 0.5f - 0.5f;
-			map[j + 1] = tar->map[tar->uniqueEdges[i].v1].image.y * 0.5f - 0.5f;
-			map[j + 2] = tar->map[tar->uniqueEdges[i].v2].image.x * 0.5f - 0.5f;
-			map[j + 3] = tar->map[tar->uniqueEdges[i].v2].image.y * 0.5f - 0.5f;
+			map[j + 0] = tar->unitCircleMap[tar->uniqueEdges[i].v1].image.x * 0.5f - 0.5f;
+			map[j + 1] = tar->unitCircleMap[tar->uniqueEdges[i].v1].image.y * 0.5f - 0.5f;
+			map[j + 2] = tar->unitCircleMap[tar->uniqueEdges[i].v2].image.x * 0.5f - 0.5f;
+			map[j + 3] = tar->unitCircleMap[tar->uniqueEdges[i].v2].image.y * 0.5f - 0.5f;
 		}
 	}
 

@@ -18,6 +18,17 @@ struct MorphEntity
 	glm::vec3 tarPos;
 };
 
+struct IntersectionEntity
+{
+	int vertexIndex;
+	glm::vec2 image;
+
+	IntersectionEntity(int vertexIndex, glm::vec2 image) :
+		vertexIndex(vertexIndex),
+		image(image)
+	{ }
+};
+
 class HarmonicMapper
 {
 private:
@@ -32,6 +43,7 @@ private:
 	bool extraIndexesReached = false;
 
 	float mergeDistance = 0.001f;
+	int nextVertexIndex;
 
 public:
 	std::map<int, MapEntity> map;
@@ -42,7 +54,10 @@ public:
 	std::vector<UniqueEdgeData>* source_edges;
 	bool** used_edges;
 
-	HarmonicMapper(MeshData &source, MeshData &target);
+	std::vector<std::vector<IntersectionEntity>> sourceIntersections;
+	std::vector<std::vector<IntersectionEntity>> targetIntersections;
+
+	HarmonicMapper(MeshData& source, MeshData& target);
 
 	static bool TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively);
 
@@ -52,6 +67,7 @@ public:
 	void initEdges();
 	void fixMapBound();
 	void fixIntersections();
+	void fixed_fixIntersections();
 	void mergeCloseVertices();
 	bool fixIntersection(int i0, int i1, int j0, int j1, bool moveBound, int* bound1, int* bound2);
 	void fixUniqueEdges();

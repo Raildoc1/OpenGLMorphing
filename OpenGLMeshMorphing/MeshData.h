@@ -3,6 +3,8 @@
 #include <map>
 #include <set>
 
+using std::vector, std::map, std::set;
+
 enum class VertexType { Unknown, Source, Target, Merged, Removed };
 enum class CoeffType { One, DHC, MVC, Kanai };
 
@@ -192,7 +194,7 @@ struct Triangle {
 	TriangleVertex b;
 	TriangleVertex c;
 
-	std::vector<UniqueEdgeData> edges;
+	vector<UniqueEdgeData> edges;
 
 	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c) : a(a), b(b), c(c)
 	{
@@ -210,7 +212,7 @@ struct Triangle {
 		UniqueVertexData v2(b.index, b.isBorder);
 		UniqueVertexData v3(c.index, c.isBorder);
 
-		edges = std::vector<UniqueEdgeData>();
+		edges = vector<UniqueEdgeData>();
 		edges.push_back(UniqueEdgeData(v1, v2));
 		edges.push_back(UniqueEdgeData(v2, v3));
 		edges.push_back(UniqueEdgeData(v3, v1));
@@ -272,10 +274,10 @@ private:
 	float lastEnergy = 0.0f;
 	float rotation = 0.0f;
 
-	std::vector<int> fixedIndices;
-	std::map<int, glm::vec2> derivatives;
-	std::vector<BorderVertex> borderVertices;
-	std::set<int> eqClassesSet;
+	vector<int> fixedIndices;
+	map<int, glm::vec2> derivatives;
+	vector<BorderVertex> borderVertices;
+	set<int> eqClassesSet;
 
 	int looseVerteicesAmount;
 
@@ -308,11 +310,12 @@ public:
 	VertexData* vertices;
 	EdgeData* edges;
 
-	std::vector<EdgeData> border;
-	std::vector<UniqueEdgeData> uniqueEdges;
-	std::map<int, MapEntity> map;
-	std::vector<int> vertexSetList;
-	std::vector<Triangle> triangles;
+	vector<EdgeData> border;
+	vector<UniqueEdgeData> uniqueEdges;
+	map<int, MapEntity> unitCircleMap;
+	vector<int> vertexSetList;
+	vector<Triangle> triangles;
+	vector<vector<int>> meshMatrix;
 
 	int*** edgesToTriangles;
 	float** k;
