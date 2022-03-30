@@ -244,12 +244,14 @@ void MeshData::addTriangleToEdgeMap(int v1, int v2, int triangle)
 
 int MeshData::getOppositeTriangle(int v1, int v2, int triangle)
 {
+	if (edgesToTriangles[v1][v2][1] == triangle) {
+		return edgesToTriangles[v1][v2][0];
+	}
 	if (edgesToTriangles[v1][v2][0] == triangle) {
 		return edgesToTriangles[v1][v2][1];
 	}
-	else if (edgesToTriangles[v1][v2][1] == triangle) {
-		return edgesToTriangles[v1][v2][0];
-	}
+
+	std::cout << "(" << v1 << ", " << v2 << ") - {" << triangles[triangle].a.index << ", " << triangles[triangle].b.index << ", " << triangles[triangle].c.index << "}" << std::endl;
 	return -1;
 }
 

@@ -86,10 +86,6 @@ void HarmonicMapper::init()
 	print_time(time_stamp, "initEdges finished");
 	time_stamp = clock();
 
-	fixMapBound();
-	print_time(time_stamp, "fixMapBound finished");
-	time_stamp = clock();
-
 	mergeMaps();
 	print_time(time_stamp, "mergeMaps finished");
 	time_stamp = clock();
@@ -97,6 +93,10 @@ void HarmonicMapper::init()
 	//fixIntersections();
 	fixed_fixIntersections();
 	print_time(time_stamp, "fixIntersections finished");
+	time_stamp = clock();
+
+	fixMapBound();
+	print_time(time_stamp, "fixMapBound finished");
 	time_stamp = clock();
 
 	clearMap();
@@ -591,7 +591,7 @@ void HarmonicMapper::mergeMaps()
 		used_edges[e.v1][e.v2] = used_edges[e.v2][e.v1] = true;
 	}
 
-	while (work_list.size() > 0) {
+	while (!work_list.empty()) {
 		UniqueEdgeData e_a = work_list.back();
 		work_list.pop_back();
 
@@ -629,7 +629,7 @@ void HarmonicMapper::mergeMaps()
 			);
 		}
 
-		while (candidate_list.size() > 0) {
+		while (!candidate_list.empty()) {
 			UniqueEdgeData e_b = candidate_list.back();
 			candidate_list.pop_back();
 
@@ -656,6 +656,7 @@ void HarmonicMapper::mergeMaps()
 
 				n++;
 				int oppositeTriangle = target->getOppositeTriangle(e_b.v1, e_b.v2, triangleIndex);
+				triangleIndex = oppositeTriangle;
 
 				if (oppositeTriangle == -1) {
 					continue;
@@ -864,6 +865,9 @@ void HarmonicMapper::fixed_fixIntersections()
 
 		uniqueEdges[i].type = VertexType::Removed;
 
+		//std::cout << "[" << i << "]" << (std::string)(source->uniqueEdges[i]) << " " << (std::string)(uniqueEdges[i]) << std::endl;
+		//std::cout << (std::string)(source->uniqueEdges[0]) << " " << (std::string)(uniqueEdges[0]) << std::endl;
+
 		uniqueEdges.push_back(
 			UniqueEdgeData(
 				VertexType::Source,
@@ -892,6 +896,51 @@ void HarmonicMapper::fixed_fixIntersections()
 		);
 	}
 
+	// TODO: target intersections!
+
+	int vertexCount = source->getVertexCount();
+
+	for (size_t i = 0; i < targetIntersections.size(); i++)
+	{
+		if (targetIntersections[i].empty()) {
+			continue;
+		}
+
+		vector<IntersectionEntity> intersections = targetIntersections[i];
+		UniqueEdgeData e = target->uniqueEdges[i];
+		std::sort(intersections.begin(), intersections.end(), LineSortComparator(target->unitCircleMap[e.v1].image));
+
+		uniqueEdges[i + source->uniqueEdges.size()].type = VertexType::Removed;
+
+		//std::cout << (std::string)(target->uniqueEdges[i]) << " " << (std::string)(uniqueEdges[i + vertexCount]) << std::endl;
+
+		uniqueEdges.push_back(
+			UniqueEdgeData(
+				VertexType::Target,
+				UniqueVertexData(VertexType::Target, e.v1.eqClass + vertexCount, e.v1.isBorder),
+				UniqueVertexData(VertexType::Merged, intersections[0].vertexIndex, false)
+			)
+		);
+
+		for (size_t i = 0; i < intersections.size() - 1; i++)
+		{
+			uniqueEdges.push_back(
+				UniqueEdgeData(
+					VertexType::Target,
+					UniqueVertexData(VertexType::Merged, intersections[i].vertexIndex, false),
+					UniqueVertexData(VertexType::Merged, intersections[i + 1].vertexIndex, false)
+				)
+			);
+		}
+
+		uniqueEdges.push_back(
+			UniqueEdgeData(
+				VertexType::Target,
+				UniqueVertexData(VertexType::Merged, intersections[intersections.size() - 1].vertexIndex, false),
+				UniqueVertexData(VertexType::Target, e.v2.eqClass + vertexCount, e.v2.isBorder)
+			)
+		);
+	}
 
 	for (auto it = uniqueEdges.begin(); it != uniqueEdges.end();)
 	{
@@ -903,8 +952,6 @@ void HarmonicMapper::fixed_fixIntersections()
 
 		it++;
 	}
-
-	// TODO: target intersections!
 }
 
 void HarmonicMapper::Equalize(int v1, int v2)

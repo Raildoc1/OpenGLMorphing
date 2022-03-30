@@ -201,6 +201,10 @@ struct UniqueEdgeData {
 
 		return false;
 	}
+
+	operator std::string() {
+		return "(" + std::to_string(v1.eqClass) + ", " + std::to_string(v2.eqClass) + ")";
+	}
 };
 
 struct Triangle {
