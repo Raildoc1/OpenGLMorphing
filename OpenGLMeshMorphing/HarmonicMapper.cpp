@@ -44,22 +44,8 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 	lastVertexIndex = this->source->getVertexCount() + this->target->getVertexCount() - 1;
 	nextVertexIndex = lastVertexIndex + 1;
 
-
-	sourceIntersections = std::vector<std::vector<IntersectionEntity>>();
-	targetIntersections = std::vector<std::vector<IntersectionEntity>>();
-
-	std::cout << "harmonic mapper const" << std::endl;
-	for (size_t i = 0; i < source.uniqueEdges.size(); i++)
-	{
-		sourceIntersections.push_back(std::vector<IntersectionEntity>());
-	}
-
-	for (size_t i = 0; i < target.uniqueEdges.size(); i++)
-	{
-		targetIntersections.push_back(std::vector<IntersectionEntity>());
-	}
-
-	std::cout << "harmonic mapper const end" << std::endl;
+	sourceIntersections = std::vector<std::vector<IntersectionEntity>>(source.uniqueEdges.size(), std::vector<IntersectionEntity>());
+	targetIntersections = std::vector<std::vector<IntersectionEntity>>(target.uniqueEdges.size(), std::vector<IntersectionEntity>());
 }
 
 bool HarmonicMapper::TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively)
@@ -135,22 +121,23 @@ void HarmonicMapper::initMap()
 
 		map[i] = x.second;
 
-		MorphEntity e;
-		e.baseEqClass = i;
-		e.vertexType = VertexType::Source;
-		e.srcPos = source->vertices[i].vertex.position;
-
 		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), -rotation);
 		int triangle;
 
+		glm::vec3 tarPos;
+
 		if (!x.second.border) {
-			e.tarPos = target->findVertexPos(x.second.image, &triangle);
+			tarPos = target->findVertexPos(x.second.image, &triangle);
 		}
 		else {
-			e.tarPos = target->findBorderPos(x.second.phi);
+			tarPos = target->findBorderPos(x.second.phi);
 		}
 
-		finalMorphMap[i] = e;
+		finalMorphMap[i] = MorphEntity(
+			VertexType::Source,
+			source->vertices[i].vertex.position,
+			tarPos
+		);
 	}
 
 	int vertexCount = source->getVertexCount();
@@ -161,22 +148,23 @@ void HarmonicMapper::initMap()
 
 		map[i + vertexCount] = x.second;
 
-		MorphEntity e;
-		e.baseEqClass = i;
-		e.vertexType = VertexType::Target;
-		e.tarPos = target->vertices[i].vertex.position;
-
 		glm::vec3 rotatedPosition = glm::rotateZ(glm::vec3(x.second.image.x, x.second.image.y, 0.0f), rotation);
 		int triangle;
 
+		glm::vec3 srcPos;
+
 		if (!x.second.border) {
-			e.srcPos = source->findVertexPos(x.second.image, &triangle);
+			srcPos = source->findVertexPos(x.second.image, &triangle);
 		}
 		else {
-			e.srcPos = source->findBorderPos(x.second.phi);
+			srcPos = source->findBorderPos(x.second.phi);
 		}
 
-		finalMorphMap[i + vertexCount] = e;
+		finalMorphMap[i + vertexCount] = MorphEntity(
+			VertexType::Target,
+			srcPos,
+			target->vertices[i].vertex.position
+		);
 	}
 }
 
@@ -457,7 +445,6 @@ bool HarmonicMapper::fixIntersection(int i0, int i1, int j0, int j1, bool moveBo
 				float t2 = glm::distance(intersection, map[c].image) / glm::distance(map[d].image, map[c].image);
 
 				MorphEntity me;
-				me.baseEqClass = centerIndex;
 				me.vertexType = VertexType::Merged;
 
 				VertexType abType = VertexType::Unknown;
@@ -657,10 +644,15 @@ void HarmonicMapper::mergeMaps()
 				target->unitCircleMap[e_b.v1].image, target->unitCircleMap[e_b.v2].image,
 				&intersection, true
 			)) {
-				IntersectionEntity in = IntersectionEntity(nextVertexIndex++, intersection);
+				int intersectionIndex = nextVertexIndex++;
+				IntersectionEntity in = IntersectionEntity(intersectionIndex, intersection);
 
 				sourceIntersections[source->meshMatrix[e_a.v1][e_a.v2]].push_back(in);
 				targetIntersections[target->meshMatrix[e_b.v1][e_b.v2]].push_back(in);
+
+				finalMorphMap[intersectionIndex] = MorphEntity(VertexType::Merged); // TODO: final morph map!
+
+				map[intersectionIndex] = MapEntity(intersection);
 
 				n++;
 				int oppositeTriangle = target->getOppositeTriangle(e_b.v1, e_b.v2, triangleIndex);
@@ -852,7 +844,67 @@ void HarmonicMapper::clearMap()
 
 void HarmonicMapper::fixed_fixIntersections()
 {
+	struct LineSortComparator {
+		LineSortComparator(glm::vec2 base) : base(base) { }
+		bool operator () (IntersectionEntity a, IntersectionEntity b) {
+			return glm::distance2(base, a.image) < glm::distance2(base, b.image);
+		}
+		glm::vec2 base;
+	};
 
+	for (size_t i = 0; i < sourceIntersections.size(); i++)
+	{
+		if (sourceIntersections[i].empty()) {
+			continue;
+		}
+
+		vector<IntersectionEntity> intersections = sourceIntersections[i];
+		UniqueEdgeData e = source->uniqueEdges[i];
+		std::sort(intersections.begin(), intersections.end(), LineSortComparator(source->unitCircleMap[e.v1].image));
+
+		uniqueEdges[i].type = VertexType::Removed;
+
+		uniqueEdges.push_back(
+			UniqueEdgeData(
+				VertexType::Source,
+				UniqueVertexData(VertexType::Source, e.v1.eqClass, e.v1.isBorder),
+				UniqueVertexData(VertexType::Merged, intersections[0].vertexIndex, false)
+			)
+		);
+
+		for (size_t i = 0; i < intersections.size() - 1; i++)
+		{
+			uniqueEdges.push_back(
+				UniqueEdgeData(
+					VertexType::Source,
+					UniqueVertexData(VertexType::Merged, intersections[i].vertexIndex, false),
+					UniqueVertexData(VertexType::Merged, intersections[i + 1].vertexIndex, false)
+				)
+			);
+		}
+
+		uniqueEdges.push_back(
+			UniqueEdgeData(
+				VertexType::Source,
+				UniqueVertexData(VertexType::Merged, intersections[intersections.size() - 1].vertexIndex, false),
+				UniqueVertexData(VertexType::Source, e.v2.eqClass, e.v2.isBorder)
+			)
+		);
+	}
+
+
+	for (auto it = uniqueEdges.begin(); it != uniqueEdges.end();)
+	{
+		if (it->type == VertexType::Removed)
+		{
+			it = uniqueEdges.erase(it);
+			continue;
+		}
+
+		it++;
+	}
+
+	// TODO: target intersections!
 }
 
 void HarmonicMapper::Equalize(int v1, int v2)

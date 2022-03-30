@@ -21,6 +21,20 @@ struct MapEntity {
 	bool locked;
 	bool border;
 	float phi;
+
+	MapEntity() :
+		image(glm::vec2()),
+		locked(false),
+		border(false),
+		phi(0.0f)
+	{}
+
+	MapEntity(glm::vec2 image) :
+		image(image),
+		locked(false),
+		border(false),
+		phi(0.0f)
+	{}
 };
 
 struct BorderVertex {

@@ -13,9 +13,26 @@ struct BorderEntity
 struct MorphEntity
 {
 	VertexType vertexType;
-	int baseEqClass;
 	glm::vec3 srcPos;
 	glm::vec3 tarPos;
+
+	MorphEntity() :
+		vertexType(VertexType::Unknown),
+		srcPos(glm::vec3()),
+		tarPos(glm::vec3())
+	{ }
+
+	MorphEntity(VertexType vertexType) :
+		vertexType(vertexType),
+		srcPos(glm::vec3()),
+		tarPos(glm::vec3())
+	{ }
+
+	MorphEntity(VertexType vertexType, glm::vec3 srcPos, glm::vec3 tarPos) :
+		vertexType(vertexType),
+		srcPos(srcPos),
+		tarPos(tarPos)
+	{ }
 };
 
 struct IntersectionEntity
