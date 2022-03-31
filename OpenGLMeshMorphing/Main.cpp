@@ -71,10 +71,10 @@ int main() {
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
 
-	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	//MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
 	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
+	MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
+	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
+	//MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
 
 	sourceData.init();
 	targetData.init();

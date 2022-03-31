@@ -32,7 +32,7 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 		int v2 = source.uniqueEdges[i].v2;
 
 		source_edges[v1].push_back(source.uniqueEdges[i]);
-		source_edges[v2].push_back(source.uniqueEdges[i]);
+		source_edges[v2].push_back(source.uniqueEdges[i].turn());
 	}
 
 	used_edges = (bool**)calloc(source_vertex_count, sizeof(bool*));
@@ -99,7 +99,7 @@ void HarmonicMapper::init()
 	print_time(time_stamp, "fixMapBound finished");
 	time_stamp = clock();
 
-	clearMap();
+	//clearMap();
 	print_time(time_stamp, "clearMap finished");
 	time_stamp = clock();
 
@@ -581,6 +581,7 @@ void HarmonicMapper::fixUniqueEdges()
 void HarmonicMapper::mergeMaps()
 {
 	int n = 0;
+	int vertexCount = source->getVertexCount();
 	UniqueVertexData v1 = source->uniqueEdges[0].v1;
 	std::vector<UniqueEdgeData> work_list = std::vector<UniqueEdgeData>();
 	std::vector<UniqueEdgeData> candidate_list = std::vector<UniqueEdgeData>();
@@ -650,8 +651,14 @@ void HarmonicMapper::mergeMaps()
 				sourceIntersections[source->meshMatrix[e_a.v1][e_a.v2]].push_back(in);
 				targetIntersections[target->meshMatrix[e_b.v1][e_b.v2]].push_back(in);
 
-				finalMorphMap[intersectionIndex] = MorphEntity(VertexType::Merged); // TODO: final morph map!
+				float t_src = glm::distance(intersection, map[e_a.v1].image) / glm::distance(map[e_a.v1].image, map[e_a.v2].image);
+				float t_tar = glm::distance(intersection, map[e_b.v1 + vertexCount].image) / glm::distance(map[e_b.v1 + vertexCount].image, map[e_b.v2 + vertexCount].image);
 
+				finalMorphMap[intersectionIndex] = MorphEntity(
+					VertexType::Merged,
+					finalMorphMap[e_a.v1].srcPos * (1 - t_src) + finalMorphMap[e_a.v2].srcPos * t_src,
+					finalMorphMap[e_b.v1 + vertexCount].tarPos * (1 - t_tar) + finalMorphMap[e_b.v2 + vertexCount].tarPos * t_tar
+				);
 				map[intersectionIndex] = MapEntity(intersection);
 
 				n++;
@@ -683,6 +690,17 @@ void HarmonicMapper::mergeMaps()
 		}
 	}
 	std::cout << "intersections amount = " << n << std::endl;
+
+	for (size_t i = 0; i < source->uniqueEdges.size(); i++)
+	{
+		if (!used_edges[source->uniqueEdges[i].v1][source->uniqueEdges[i].v2]) {
+			std::cout << "edge " << std::string(source->uniqueEdges[i]) << " never used ( isBorder = " << source->uniqueEdges[i].isBorder() << " )" << std::endl;
+		}
+	}
+
+	for (size_t i = 0; i < source_edges[1763].size(); i++) {
+		std::cout << std::string(source_edges[1763][i]) << std::endl;
+	}
 }
 
 void HarmonicMapper::retriangulate()

@@ -3,6 +3,7 @@
 #include "MeshData.h"
 #include <filesystem>
 #include <Eigen/Dense>
+#include <glm/gtx/string_cast.hpp>
 
 void print_time_stamp(const clock_t& prev, const std::string msg) {
 	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
@@ -795,8 +796,13 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 		}
 	}
 
-	std::cout << "ERROR: findVertexPos: could not find vertex position! { s = " << s << ", t = " << t << "}" << std::endl;
+	std::cout << "ERROR: findVertexPos: could not find vertex position for " << to_string(mapPos) << "! { s = " << s << ", t = " << t << "}" << std::endl;
 	std::cout << "ERROR: min_bar = " << min_bar << ", min_s = " << min_s << ", min_t = " << min_t << std::endl;
+
+	glm::vec2 norm = glm::normalize(mapPos);
+	float phi = glm::acos(norm.x);
+	*triangle = getBorderTriangle(phi);
+
 	return glm::vec3(0.0f);
 }
 
@@ -879,12 +885,19 @@ int MeshData::getBorderTriangle(float phi)
 		}
 
 		while (phi2 < phi1) {
-			phi2 += pi * 2.0f;
+			phi1 -= pi * 2.0f;
 		}
 
 		if (phi1 <= phi && phi <= phi2) {
 			return edgesToTriangles[borderVertices[i].eqClass][borderVertices[j].eqClass][0];
 		}
+	}
+
+	std::cout << "no triangle for phi = " << phi << std::endl;
+
+	for (size_t i = 0; i < borderVertices.size(); i++)
+	{
+		std::cout << "[" << i << "]" << borderVertices[i].phi << std::endl;
 	}
 
 	return -1;

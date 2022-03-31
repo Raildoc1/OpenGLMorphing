@@ -205,6 +205,13 @@ struct UniqueEdgeData {
 	operator std::string() {
 		return "(" + std::to_string(v1.eqClass) + ", " + std::to_string(v2.eqClass) + ")";
 	}
+
+	UniqueEdgeData turn() {
+		UniqueEdgeData turned = UniqueEdgeData(type, v2, v1);
+		turned.triangle1 = triangle1;
+		turned.triangle2 = triangle2;
+		return turned;
+	}
 };
 
 struct Triangle {
