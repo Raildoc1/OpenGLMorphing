@@ -1,9 +1,9 @@
 #pragma once
-#include <ctime>
-#include <string>
-#include <iostream>
-#include <filesystem>
+#include<glm/glm.hpp>
 
-void print_time_stamp(const clock_t& prev, const std::string msg) {
-	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
-}
+class Utils
+{
+public:
+	static bool tryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively);
+};
+

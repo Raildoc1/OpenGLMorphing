@@ -171,6 +171,7 @@
     <ClCompile Include="SuperVAO.cpp" />
     <ClCompile Include="SuperVBO.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VAO.cpp" />
     <ClCompile Include="VBO.cpp" />
   </ItemGroup>
@@ -186,7 +187,7 @@
     <ClInclude Include="SuperVAO.h" />
     <ClInclude Include="SuperVBO.h" />
     <ClInclude Include="Texture.h" />
-    <ClInclude Include="utils.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="VAO.h" />
     <ClInclude Include="VBO.h" />
   </ItemGroup>

@@ -3,6 +3,8 @@
 #include "SuperMesh.h"
 #include <map>
 
+using std::vector, std::map;
+
 struct BorderEntity
 {
 	int eqClass;
@@ -65,30 +67,23 @@ private:
 public:
 	std::map<int, MapEntity> map;
 	std::map<int, MorphEntity> finalMorphMap;
-	std::vector<UniqueEdgeData> uniqueEdges;
-	std::vector<BorderEntity> border;
+	vector<UniqueEdgeData> uniqueEdges;
+	vector<BorderEntity> border;
 
-	std::vector<UniqueEdgeData>* source_edges;
-	bool** used_edges;
-
-	std::vector<std::vector<IntersectionEntity>> sourceIntersections;
-	std::vector<std::vector<IntersectionEntity>> targetIntersections;
+	vector<vector<IntersectionEntity>> sourceIntersections;
+	vector<vector<IntersectionEntity>> targetIntersections;
 
 	HarmonicMapper(MeshData& source, MeshData& target);
-
-	static bool TryFindIntersection(glm::vec2 a, glm::vec2 b, glm::vec2 c, glm::vec2 d, glm::vec2* intersection, bool exclusively);
 
 	void init();
 	void initMap();
 	void mergeMaps();
 	void initEdges();
 	void fixMapBound();
-	void fixIntersections();
 	void fixed_fixIntersections();
 	void mergeCloseVertices();
 	bool fixIntersection(int i0, int i1, int j0, int j1, bool moveBound, int* bound1, int* bound2);
 	void fixUniqueEdges();
-	void retriangulate();
 	void fast_retriangulate();
 	void clearMap();
 

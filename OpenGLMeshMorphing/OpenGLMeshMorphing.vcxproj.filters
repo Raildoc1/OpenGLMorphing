@@ -72,6 +72,9 @@
     <ClCompile Include="SimpleSLE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h">
@@ -113,7 +116,7 @@
     <ClInclude Include="SuperVAO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils.h">
+    <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

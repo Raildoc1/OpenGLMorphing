@@ -9,41 +9,6 @@ void print_time_stamp(const clock_t& prev, const std::string msg) {
 	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
 }
 
-float* solveSLE(float** A, float* b, int n) {
-	float** AA = (float**)calloc(n, sizeof(float*));
-	for (size_t i = 0; i < n; i++)
-	{
-		AA[i] = (float*)calloc(n + 1, sizeof(float));
-		memcpy(AA[i], A[i], n * sizeof(float));
-		AA[i][n] = b[i];
-	}
-
-	for (int i = 0; i < n - 1; i++) {
-		for (int h = i + 1; h < n; h++)
-		{
-			float t = AA[h][i] / AA[i][i];
-			for (int j = 0; j <= n; j++)
-			{
-				AA[h][j] = AA[h][j] - t * AA[i][j];
-			}
-		}
-	}
-
-	float* result = (float*)calloc(n, sizeof(float));
-
-	for (int i = n - 1; i >= 0; i--)
-	{
-		result[i] = AA[i][n];
-		for (int j = n - 1; j > i; j--)
-		{
-			result[i] = result[i] - AA[i][j] * result[j];
-		}
-		result[i] = result[i] / AA[i][i];
-	}
-
-	return result;
-}
-
 MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 {
 	this->mesh = mesh;
@@ -67,7 +32,6 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	uniqueEdges = vector<UniqueEdgeData>();
 	fixedIndices = vector<int>();
 	unitCircleMap = map<int, MapEntity>();
-	derivatives = map<int, glm::vec2>();
 	borderVertices = vector<BorderVertex>();
 	eqClassesSet = set<int>();
 	triangles = vector<Triangle>();
@@ -126,8 +90,6 @@ void MeshData::init()
 	initTriangles();
 	print_time_stamp(time_stamp, "initTriangles finished");
 	time_stamp = clock();
-
-	lastEnergy = calculateMapEnergy();
 
 	initialized = true;
 }
@@ -269,8 +231,6 @@ void MeshData::initBorder()
 			}
 
 			if (edges[i].equals(edges[j])) {
-				/*std::cout << i << ": " << "(" << edges[i].v1.eqClass << ", " << edges[i].v2.eqClass << ")" << " == "
-					<< i << ": " << "(" << edges[j].v1.eqClass << ", " << edges[j].v2.eqClass << ")" << std::endl;*/
 				isDuplicate = true;
 				break;
 			}
@@ -421,23 +381,12 @@ void MeshData::initHarmonicK()
 					float Aijk1 = glm::cross(ik1, jk1).length() / 2.0f;
 
 					result += (lik1 + ljk1 - lji) / Aijk1;
-
-					if (result < 0.0f) {
-						//std::cout << "Alert!" << std::endl;
-						//std::cout << "lji = " << lji << std::endl;
-						//std::cout << "lik1 = " << lik1 << std::endl;
-						//std::cout << "ljk1 = " << ljk1 << std::endl;
-					}
 				}
 				else if (coeffType == CoeffType::MVC) {
 					float dotij = glm::dot(glm::normalize(vj - vi), glm::normalize(vk1 - vi));
 					float alpha = glm::acos(dotij);
 
 					result += glm::tan(alpha / 2.0f) / glm::distance(vi, vj);
-
-					if (result < 0.0f) {
-						//std::cout << "Alert!" << std::endl;
-					}
 				}
 				else if (coeffType == CoeffType::DHC) {
 					float dotij = glm::dot(glm::normalize(vj - vk1), glm::normalize(vi - vk1));
@@ -460,23 +409,12 @@ void MeshData::initHarmonicK()
 					float Aijk2 = glm::cross(ik2, jk2).length() / 2.0f;
 
 					result += (lik2 + ljk2 - lji) / Aijk2;
-
-					if (result < 0.0f) {
-						//std::cout << "Alert!" << std::endl;
-						//std::cout << "lji = " << lji << std::endl;
-						//std::cout << "lik2 = " << lik2 << std::endl;
-						//std::cout << "ljk2 = " << ljk2 << std::endl;
-					}
 				}
 				else if (coeffType == CoeffType::MVC) {
 					float dotji = glm::dot(glm::normalize(vj - vi), glm::normalize(vk2 - vi));
 					float beta = glm::acos(dotji);
 
 					result += glm::tan(beta / 2.0f) / glm::distance(vi, vj);
-
-					if (result < 0.0f) {
-						//std::cout << "Alert!" << std::endl;
-					}
 				}
 				else if (coeffType == CoeffType::DHC) {
 					float dotji = glm::dot(glm::normalize(vj - vk2), glm::normalize(vi - vk2));
@@ -504,11 +442,8 @@ void MeshData::initHarmonicK()
 			}
 
 			k[i][j] = k[vertices[i].eqClass][vertices[j].eqClass];
-			//std::cout << std::setw(6) << std::setprecision(2) << k[i][j] << " ";
 		}
-		//std::cout << std::endl;
 	}
-	//std::cout << std::endl;
 }
 
 void MeshData::initLambda()
@@ -680,84 +615,6 @@ void MeshData::initMap()
 
 		unitCircleMap[eqClass] = e;
 	}
-}
-
-float MeshData::calculateMapEnergy()
-{
-	if (!initialized) {
-		return 0.0f;
-	}
-
-	float result = 0.0f;
-
-	for (size_t i = 0; i < uniqueEdges.size(); i++)
-	{
-		derivatives[uniqueEdges[i].v1.eqClass] = glm::vec2(0.0f, 0.0f);
-		derivatives[uniqueEdges[i].v2.eqClass] = glm::vec2(0.0f, 0.0f);
-	}
-
-	for (size_t i = 0; i < uniqueEdges.size(); i++)
-	{
-		int v1 = uniqueEdges[i].v1.eqClass;
-		int v2 = uniqueEdges[i].v2.eqClass;
-		glm::vec2 delta = k[v1][v2] * (unitCircleMap[v1].image - unitCircleMap[v2].image);
-
-		derivatives[v1] += delta;
-		derivatives[v2] -= delta;
-
-		//std::cout << "derivatives[" << v1 << "] = " << "(" << derivatives[v1].x << ", " << derivatives[v1].y << ") - k[" << v1 << "][" << v2 << "] = " << k[v1][v2] << std::endl;
-
-		result += k[v1][v2] * glm::distance2(unitCircleMap[v1].image, unitCircleMap[v2].image);
-	}
-
-	return result / 2.0f;
-}
-
-float MeshData::tickMap()
-{
-	if (!initialized) {
-		return 0.0f;
-	}
-
-	float energy = calculateMapEnergy();
-	float energyDelta = energy - lastEnergy;
-
-	lastEnergy = energy;
-
-	for (auto const& x : unitCircleMap)
-	{
-		if (x.second.locked) {
-			continue;
-		}
-
-		unitCircleMap[x.first].image -= 0.05f * derivatives[x.first];
-	}
-
-	std::cout << energy << std::endl;
-
-	return energyDelta;
-}
-
-void MeshData::harmonizeMap()
-{
-	std::cout << "harmonizeMap" << std::endl;
-
-	int iterations = 0;
-	float delta;
-	do
-	{
-		iterations++;
-		delta = tickMap();
-
-		//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
-
-		if (delta < 0.0f) {
-			delta = -delta;
-		}
-
-	} while (iterations < MAX_ITER && delta > 0.001f);
-
-	//std::cout << "iterations = " << iterations << "; delta = " << delta << std::endl;
 }
 
 glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {

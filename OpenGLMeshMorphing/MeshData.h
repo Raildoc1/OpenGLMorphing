@@ -124,9 +124,6 @@ struct UniqueEdgeData {
 
 	VertexType type;
 
-	int triangle1 = -1;
-	int triangle2 = -1;
-
 	UniqueEdgeData() :
 		v1(UniqueVertexData(-1, false)),
 		v2(UniqueVertexData(-1, false)),
@@ -207,10 +204,7 @@ struct UniqueEdgeData {
 	}
 
 	UniqueEdgeData turn() {
-		UniqueEdgeData turned = UniqueEdgeData(type, v2, v1);
-		turned.triangle1 = triangle1;
-		turned.triangle2 = triangle2;
-		return turned;
+		return UniqueEdgeData(type, v2, v1);
 	}
 };
 
@@ -300,7 +294,6 @@ private:
 	float rotation = 0.0f;
 
 	vector<int> fixedIndices;
-	map<int, glm::vec2> derivatives;
 	vector<BorderVertex> borderVertices;
 	set<int> eqClassesSet;
 
@@ -321,8 +314,6 @@ private:
 	void initFixedIndices();
 
 	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
-
-	float calculateMapEnergy();
 
 public:
 	int getVertexCount() { return vertexCount; }
