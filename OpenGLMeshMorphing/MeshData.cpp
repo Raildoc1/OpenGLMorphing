@@ -17,8 +17,8 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	this->rotation = rotation;
 	this->invertBorder = invertBorder;
 
-	vertices = (VertexData*)calloc(vertexCount, sizeof(VertexData));
-	edges = (EdgeData*)calloc(edgesCount, sizeof(EdgeData));
+	vertices = vector<VertexData>(vertexCount);
+	edges = vector<EdgeData>(edgesCount);
 	k = (float**)calloc(vertexCount, sizeof(float*));
 	lambda = (float**)calloc(vertexCount, sizeof(float*));
 
@@ -47,8 +47,6 @@ MeshData::~MeshData()
 	}
 
 	delete k;
-	delete vertices;
-	delete edges;
 }
 
 void MeshData::init()
@@ -171,6 +169,13 @@ void MeshData::initVertices()
 
 void MeshData::initTriangles()
 {
+	vector<vector<bool>> borderMatrix = vector<vector<bool>>(vertexCount, vector<bool>(vertexCount, false));
+
+	for (size_t i = 0; i < edges.size(); i++)
+	{
+		borderMatrix[edges[i].v1.eqClass][edges[i].v2.eqClass] = borderMatrix[edges[i].v2.eqClass][edges[i].v1.eqClass] = edges[i].isBorder;
+	}
+
 	indicesCount = mesh.indices.size();
 	for (size_t i = 0; i < indicesCount; i += 3)
 	{
@@ -182,7 +187,7 @@ void MeshData::initTriangles()
 		TriangleVertex b(v2, unitCircleMap[v2.eqClass].image);
 		TriangleVertex c(v3, unitCircleMap[v3.eqClass].image);
 
-		Triangle triangle(a, b, c);
+		Triangle triangle(a, b, c, &borderMatrix);
 		triangles.push_back(triangle);
 
 		addTriangleToEdgeMap(v1.eqClass, v2.eqClass, triangles.size() - 1);
@@ -299,7 +304,7 @@ void MeshData::initUniqueEdges()
 	{
 		UniqueVertexData v1 = UniqueVertexData(edges[i].v1.eqClass, vertices[edges[i].v1.eqClass].isBorder);
 		UniqueVertexData v2 = UniqueVertexData(edges[i].v2.eqClass, vertices[edges[i].v2.eqClass].isBorder);
-		UniqueEdgeData e = UniqueEdgeData(v1, v2);
+		UniqueEdgeData e = UniqueEdgeData(v1, v2, edges[i].isBorder);
 
 		bool isDuplicate = false;
 		for (size_t i = 0; i < uniqueEdges.size(); i++)
@@ -758,4 +763,9 @@ int MeshData::getBorderTriangle(float phi)
 	}
 
 	return -1;
+}
+
+bool MeshData::isBorder(UniqueEdgeData& e)
+{
+	return edgesToTriangles[e.v1][e.v2][1] == -1;
 }

@@ -124,27 +124,27 @@ struct UniqueEdgeData {
 
 	VertexType type;
 
+	bool isBorder;
+
 	UniqueEdgeData() :
 		v1(UniqueVertexData(-1, false)),
 		v2(UniqueVertexData(-1, false)),
 		type(VertexType::Unknown)
 	{}
 
-	UniqueEdgeData(UniqueVertexData v1, UniqueVertexData v2) :
+	UniqueEdgeData(UniqueVertexData v1, UniqueVertexData v2, bool isBorder) :
 		v1(v1),
 		v2(v2),
-		type(VertexType::Unknown)
+		type(VertexType::Unknown),
+		isBorder(isBorder)
 	{}
 
-	UniqueEdgeData(VertexType type, UniqueVertexData v1, UniqueVertexData v2) :
+	UniqueEdgeData(VertexType type, UniqueVertexData v1, UniqueVertexData v2, bool isBorder) :
 		type(type),
 		v1(v1),
-		v2(v2)
+		v2(v2),
+		isBorder(isBorder)
 	{}
-	
-	bool isBorder() const {
-		return v1.isBorder && v2.isBorder;
-	}
 
 	bool equals(UniqueEdgeData& e) {
 		return (v1 == e.v1 && v2 == e.v2) 
@@ -204,7 +204,7 @@ struct UniqueEdgeData {
 	}
 
 	UniqueEdgeData turn() {
-		return UniqueEdgeData(type, v2, v1);
+		return UniqueEdgeData(type, v2, v1, isBorder);
 	}
 };
 
@@ -215,7 +215,7 @@ struct Triangle {
 
 	vector<UniqueEdgeData> edges;
 
-	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c) : a(a), b(b), c(c)
+	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c, vector<vector<bool>>* context) : a(a), b(b), c(c)
 	{
 		invAr = 1.0f / (-b.image.y * c.image.x + a.image.y * (-b.image.x + c.image.x) + a.image.x * (b.image.y - c.image.y) + b.image.x * c.image.y);
 
@@ -232,9 +232,9 @@ struct Triangle {
 		UniqueVertexData v3(c.index, c.isBorder);
 
 		edges = vector<UniqueEdgeData>();
-		edges.push_back(UniqueEdgeData(v1, v2));
-		edges.push_back(UniqueEdgeData(v2, v3));
-		edges.push_back(UniqueEdgeData(v3, v1));
+		edges.push_back(UniqueEdgeData(v1, v2, (*context)[v1.eqClass][v2.eqClass]));
+		edges.push_back(UniqueEdgeData(v2, v3, (*context)[v2.eqClass][v3.eqClass]));
+		edges.push_back(UniqueEdgeData(v3, v1, (*context)[v3.eqClass][v1.eqClass]));
 	}
 
 	void getBarycentricCoordinates(glm::vec2 point, float* s, float* t) {
@@ -323,8 +323,8 @@ public:
 
 	bool isBorder(const UniqueEdgeData& e) { return vertices[e.v1.eqClass].isBorder && vertices[e.v2.eqClass].isBorder; };
 
-	VertexData* vertices;
-	EdgeData* edges;
+	vector<VertexData> vertices;
+	vector<EdgeData> edges;
 
 	vector<EdgeData> border;
 	vector<UniqueEdgeData> uniqueEdges;
@@ -349,4 +349,5 @@ public:
 	glm::vec3 findVertexPos(glm::vec2 mapPos, int* triangle);
 	glm::vec3 findBorderPos(float phi);
 	int getBorderTriangle(float phi);
+	bool isBorder(UniqueEdgeData& e);
 };
