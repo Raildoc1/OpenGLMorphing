@@ -48,6 +48,29 @@ struct IntersectionEntity
 	{ }
 };
 
+struct ClockwiseComparator {
+
+	std::map<int, MapEntity>* map;
+
+	ClockwiseComparator(std::map<int, MapEntity>* map) : map(map) { }
+
+	bool operator () (const UniqueEdgeData &e1, const UniqueEdgeData& e2)
+	{
+		if (e1.v1.eqClass != e2.v1.eqClass) {
+			std::cout << "edges have different origins!" << std::endl;
+			std::cout << "--- " << std::string(e1) << " " << std::string(e2) << std::endl;
+		}
+
+		glm::vec2 a = (*map)[e1.v2].image - (*map)[e1.v1].image;
+		glm::vec2 b = (*map)[e2.v2].image - (*map)[e1.v1].image;
+
+		float angleA = atan2(a.x, a.y);
+		float angleB = atan2(b.x, b.y);
+
+		return angleA > angleB;
+	}
+};
+
 class HarmonicMapper
 {
 private:
@@ -64,6 +87,8 @@ private:
 	float mergeDistance = 0.001f;
 	int nextVertexIndex;
 
+	std::vector <SuperVertex> superVertices = std::vector <SuperVertex>();
+	std::vector <GLuint> superIndices = std::vector <GLuint>();
 public:
 	std::map<int, MapEntity> map;
 	std::map<int, MorphEntity> finalMorphMap;
@@ -84,6 +109,7 @@ public:
 	void mergeCloseVertices();
 	bool fixIntersection(int i0, int i1, int j0, int j1, bool moveBound, int* bound1, int* bound2);
 	void fixUniqueEdges();
+	void retriangulate();
 	void fast_retriangulate();
 	void clearMap();
 

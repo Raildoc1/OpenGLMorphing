@@ -15,28 +15,12 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "AlbertEinstein"
-        }
-    ],
-    "materials" : [
-        {
-            "doubleSided" : true,
-            "name" : "Material",
-            "pbrMetallicRoughness" : {
-                "baseColorFactor" : [
-                    0.800000011920929,
-                    0.800000011920929,
-                    0.800000011920929,
-                    1
-                ],
-                "metallicFactor" : 0,
-                "roughnessFactor" : 0.5
-            }
+            "name" : "Icosphere"
         }
     ],
     "meshes" : [
         {
-            "name" : "AlbertEinstein",
+            "name" : "Icosphere",
             "primitives" : [
                 {
                     "attributes" : {
@@ -44,8 +28,7 @@
                         "NORMAL" : 1,
                         "TEXCOORD_0" : 2
                     },
-                    "indices" : 3,
-                    "material" : 0
+                    "indices" : 3
                 }
             ]
         }
@@ -54,64 +37,64 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 3546,
+            "count" : 4452,
             "max" : [
-                1.2865315675735474,
-                -0.04333273321390152,
-                1.5057847499847412
+                3.8922572135925293,
+                0.23231005668640137,
+                3.894841432571411
             ],
             "min" : [
-                -1.2865595817565918,
-                -2.7312815189361572,
-                -1.194966197013855
+                -3.8922574520111084,
+                -7.267772674560547,
+                -3.894841432571411
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 3546,
+            "count" : 4452,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 3546,
+            "count" : 4452,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 17772,
+            "count" : 21600,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 42552,
+            "byteLength" : 53424,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 42552,
-            "byteOffset" : 42552
+            "byteLength" : 53424,
+            "byteOffset" : 53424
         },
         {
             "buffer" : 0,
-            "byteLength" : 28368,
-            "byteOffset" : 85104
+            "byteLength" : 35616,
+            "byteOffset" : 106848
         },
         {
             "buffer" : 0,
-            "byteLength" : 35544,
-            "byteOffset" : 113472
+            "byteLength" : 43200,
+            "byteOffset" : 142464
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 149016,
-            "uri" : "alberd_low.bin"
+            "byteLength" : 185664,
+            "uri" : "sphere.bin"
         }
     ]
 }

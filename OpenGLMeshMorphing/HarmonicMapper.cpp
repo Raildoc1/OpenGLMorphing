@@ -54,6 +54,7 @@ void HarmonicMapper::init()
 	time_stamp = clock();
 
 	//fast_retriangulate();
+	retriangulate();
 	print_time(time_stamp, "retriangulate finished");
 	time_stamp = clock();
 
@@ -489,6 +490,132 @@ void HarmonicMapper::mergeMaps()
 	}
 }
 
+void HarmonicMapper::retriangulate()
+{
+	int superVertexCount = nextVertexIndex;
+	vector<vector<int>> edgesUsed = vector<vector<int>>(superVertexCount, vector<int>(superVertexCount, 0));
+	vector<bool> verticesUsed = vector<bool>(superVertexCount, false);
+	vector<vector<UniqueEdgeData>> edges = vector<vector<UniqueEdgeData>>(superVertexCount, vector<UniqueEdgeData>());
+	ClockwiseComparator comparator = ClockwiseComparator(&map);
+	superVertices.clear();
+	superIndices.clear();
+
+	for (auto& e : uniqueEdges)
+	{
+		edges[e.v1].push_back(e);
+		edges[e.v2].push_back(e.turn());
+	}
+
+	for (auto& e : edges)
+	{
+		std::sort(e.begin(), e.end(), comparator);
+	}
+
+	int v0 = uniqueEdges[0].v1.eqClass;
+	vector<int> workList = vector<int>();
+	vector<UniqueEdgeData> polygonList = vector<UniqueEdgeData>();
+	workList.push_back(v0);
+	verticesUsed[v0] = true;
+
+	while (!workList.empty())
+	{
+		int origin = workList.back();
+		workList.pop_back();
+
+		for (auto& e : edges[origin])
+		{
+			int currentVertex = e.v2;
+			int prevVertex = e.v1;
+			polygonList.push_back(e);
+			//std::cout << origin << " : ";
+			while (currentVertex != origin) {
+				//std::cout << currentVertex << " ";
+
+				if (edgesUsed[polygonList.back().v1][polygonList.back().v2] > 1
+					|| edgesUsed[polygonList.back().v2][polygonList.back().v1] > 1
+					|| polygonList.size() > 6) {
+					//std::cout << currentVertex << " abort ";
+					polygonList.clear();
+					break;
+				}
+
+				UniqueEdgeData currentEdge;
+
+				for (size_t i = 0; i < edges[currentVertex].size(); i++)
+				{
+					if (edges[currentVertex][i].v2 == prevVertex) {
+						prevVertex = currentVertex;
+						currentEdge = edges[currentVertex][(i + 1) % edges[currentVertex].size()];
+						polygonList.push_back(currentEdge);
+						break;
+					}
+				}
+
+				currentVertex = currentEdge.v2;
+			}
+
+			/*for (auto& p : polygonList)
+			{
+				std::cout << (std::string)(p) << " ";
+			}*/
+
+			for (auto& p : polygonList)
+			{
+				if (edgesUsed[p.v1][p.v2] > 1 || edgesUsed[p.v2][p.v1] > 1) {
+					polygonList.clear();
+					break;
+				}
+			}
+
+			for (auto& p : polygonList)
+			{
+				edgesUsed[p.v1][p.v2]++;
+				edgesUsed[p.v2][p.v1]++;
+			}
+
+			SuperVertex originSuperVertex(finalMorphMap[origin].srcPos, finalMorphMap[origin].tarPos);
+
+			int polygonEdgesAmount = polygonList.size();
+			for (int i = 1; i < polygonEdgesAmount - 1; i++)
+			{
+				SuperVertex v1(
+					finalMorphMap[polygonList[i].v1].srcPos,
+					finalMorphMap[polygonList[i].v1].tarPos
+				);
+				SuperVertex v2(
+					finalMorphMap[polygonList[i + 1].v1].srcPos,
+					finalMorphMap[polygonList[i + 1].v1].tarPos
+				);
+
+				superVertices.push_back(originSuperVertex);
+				superIndices.push_back(superVertices.size() - 1);
+				superVertices.push_back(v1);
+				superIndices.push_back(superVertices.size() - 1);
+				superVertices.push_back(v2);
+				superIndices.push_back(superVertices.size() - 1);
+			}
+
+			//std::cout << polygonList.size() << std::endl;
+			polygonList.clear();
+
+			if (!verticesUsed[e.v2]) {
+				workList.push_back(e.v2);
+				verticesUsed[e.v2] = true;
+			}
+		}
+	}
+
+	for (auto& e : edges)
+	{
+		if (e.empty()) {
+			continue;
+		}
+		if (!verticesUsed[e[0].v1]) {
+			std::cout << "vertex" << e[0].v1 << " was never used!" << std::endl;
+		}
+	}
+}
+
 void HarmonicMapper::fast_retriangulate()
 {
 	std::cout << "retriangulating..." << std::endl;
@@ -746,95 +873,99 @@ bool HarmonicMapper::hasEdge(int v1, int v2) {
 	return false;
 }
 
-SuperMesh* HarmonicMapper::generateSuperMesh() {
+//SuperMesh* HarmonicMapper::generateSuperMesh() {
+//
+//	std::cout << "generating super mesh..." << std::endl;
+//	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
+//	fixUniqueEdges();
+//	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
+//	std::vector <SuperVertex>* vertices = new std::vector <SuperVertex>();
+//	std::vector <GLuint>* indices = new std::vector <GLuint>();
+//	std::cout << "vectors created successfully!" << std::endl;
+//
+//	int n = 0;
+//
+//	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
+//	{
+//		auto e1 = uniqueEdges[i];
+//
+//		int triangles_desired_amount = e1.isBorder ? 1 : 2;
+//
+//		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
+//		{
+//			if (i == j) {
+//				continue;
+//			}
+//
+//			auto e2 = uniqueEdges[j];
+//			for (size_t k = j + 1; k < uniqueEdges.size(); k++)
+//			{
+//				if (k == i || k == j) {
+//					continue;
+//				}
+//
+//				auto e3 = uniqueEdges[k];
+//
+//				if (e1.isTriangle(e2, e3)) {
+//					int v3_ind = 0;
+//					if (e3.v1.eqClass != e1.v1.eqClass && e3.v1.eqClass != e1.v2.eqClass) {
+//						v3_ind = e3.v1;
+//					}
+//					else {
+//						v3_ind = e3.v2;
+//					}
+//
+//					SuperVertex v1(finalMorphMap[e1.v1].srcPos, finalMorphMap[e1.v1].tarPos);
+//					SuperVertex v2(finalMorphMap[e1.v2].srcPos, finalMorphMap[e1.v2].tarPos);
+//					SuperVertex v3(finalMorphMap[v3_ind].srcPos, finalMorphMap[v3_ind].tarPos);
+//
+//					vertices->push_back(v1);
+//					indices->push_back(vertices->size() - 1);
+//
+//					if (isClockWise(map[e1.v1].image, map[e1.v2].image, map[v3_ind].image)) {
+//						vertices->push_back(v2);
+//						indices->push_back(vertices->size() - 1);
+//						vertices->push_back(v3);
+//						indices->push_back(vertices->size() - 1);
+//					}
+//					else {
+//						vertices->push_back(v3);
+//						indices->push_back(vertices->size() - 1);
+//						vertices->push_back(v2);
+//						indices->push_back(vertices->size() - 1);
+//					}
+//
+//					if (n++ % 100 == 0) {
+//						//std::cout << n << std::endl;
+//					}
+//
+//					if ((--triangles_desired_amount) <= 0) {
+//						goto out;
+//					}
+//
+//					break;
+//				}
+//			}
+//		}
+//	out:;
+//	}
+//
+//	std::cout << "Super mesh vertices amount = " << vertices->size() << std::endl;
+//	std::cout << "Super mesh indices amount = " << indices->size() << std::endl;
+//
+//	SuperMesh* superMesh = new SuperMesh(*vertices, *indices);
+//
+//	std::cout << "Super mesh generated successfully!" << std::endl;
+//
+//	return superMesh;
+//}
 
-	std::cout << "generating super mesh..." << std::endl;
-	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
-	fixUniqueEdges();
-	std::cout << "uniqueEdges.size() = " << uniqueEdges.size() << std::endl;
-	std::vector <SuperVertex>* vertices = new std::vector <SuperVertex>();
-	std::vector <GLuint>* indices = new std::vector <GLuint>();
-	std::cout << "vectors created successfully!" << std::endl;
+SuperMesh* HarmonicMapper::generateSuperMesh()
+{
+	std::cout << "Super mesh vertices amount = " << superVertices.size() << std::endl;
+	std::cout << "Super mesh indices amount = " << superIndices.size() << std::endl;
 
-	int n = 0;
-
-	for (size_t i = 0; i < uniqueEdges.size() - 2; i++)
-	{
-		auto e1 = uniqueEdges[i];
-
-		int triangles_desired_amount = e1.isBorder ? 1 : 2;
-
-		for (size_t j = i + 1; j < uniqueEdges.size() - 1; j++)
-		{
-			if (i == j) {
-				continue;
-			}
-
-			auto e2 = uniqueEdges[j];
-			for (size_t k = j + 1; k < uniqueEdges.size(); k++)
-			{
-				if (k == i || k == j) {
-					continue;
-				}
-
-				auto e3 = uniqueEdges[k];
-
-				if (e1.isTriangle(e2, e3)) {
-					int v3_ind = 0;
-					if (e3.v1.eqClass != e1.v1.eqClass && e3.v1.eqClass != e1.v2.eqClass) {
-						v3_ind = e3.v1;
-					}
-					else {
-						v3_ind = e3.v2;
-					}
-
-					SuperVertex v1;
-					v1.position1 = finalMorphMap[e1.v1].srcPos;
-					v1.position2 = finalMorphMap[e1.v1].tarPos;
-
-					SuperVertex v2;
-					v2.position1 = finalMorphMap[e1.v2].srcPos;
-					v2.position2 = finalMorphMap[e1.v2].tarPos;
-
-					SuperVertex v3;
-					v3.position1 = finalMorphMap[v3_ind].srcPos;
-					v3.position2 = finalMorphMap[v3_ind].tarPos;
-
-					vertices->push_back(v1);
-					indices->push_back(vertices->size() - 1);
-
-					if (isClockWise(map[e1.v1].image, map[e1.v2].image, map[v3_ind].image)) {
-						vertices->push_back(v2);
-						indices->push_back(vertices->size() - 1);
-						vertices->push_back(v3);
-						indices->push_back(vertices->size() - 1);
-					}
-					else {
-						vertices->push_back(v3);
-						indices->push_back(vertices->size() - 1);
-						vertices->push_back(v2);
-						indices->push_back(vertices->size() - 1);
-					}
-
-					if (n++ % 100 == 0) {
-						//std::cout << n << std::endl;
-					}
-
-					if ((--triangles_desired_amount) <= 0) {
-						goto out;
-					}
-
-					break;
-				}
-			}
-		}
-	out:;
-	}
-
-	std::cout << "Super mesh vertices amount = " << vertices->size() << std::endl;
-	std::cout << "Super mesh indices amount = " << indices->size() << std::endl;
-
-	SuperMesh* superMesh = new SuperMesh(*vertices, *indices);
+	SuperMesh* superMesh = new SuperMesh(superVertices, superIndices);
 
 	std::cout << "Super mesh generated successfully!" << std::endl;
 

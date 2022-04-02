@@ -199,7 +199,7 @@ struct UniqueEdgeData {
 		return false;
 	}
 
-	operator std::string() {
+	operator std::string() const {
 		return "(" + std::to_string(v1.eqClass) + ", " + std::to_string(v2.eqClass) + ")";
 	}
 
@@ -283,7 +283,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::MVC;
+	CoeffType coeffType = CoeffType::Kanai;
 
 	int vertexCount;
 	int edgesCount;

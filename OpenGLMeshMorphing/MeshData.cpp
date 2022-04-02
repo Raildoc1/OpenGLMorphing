@@ -662,7 +662,7 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 	std::cout << "ERROR: min_bar = " << min_bar << ", min_s = " << min_s << ", min_t = " << min_t << std::endl;
 
 	glm::vec2 norm = glm::normalize(mapPos);
-	float phi = glm::acos(norm.x);
+	float phi = atan2(norm.x, norm.y);
 	*triangle = getBorderTriangle(phi);
 
 	return glm::vec3(0.0f);
