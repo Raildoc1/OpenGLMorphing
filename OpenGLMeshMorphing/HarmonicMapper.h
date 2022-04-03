@@ -17,23 +17,31 @@ struct MorphEntity
 	VertexType vertexType;
 	glm::vec3 srcPos;
 	glm::vec3 tarPos;
+	glm::vec3 srcNorm;
+	glm::vec3 tarNorm;
 
 	MorphEntity() :
 		vertexType(VertexType::Unknown),
 		srcPos(glm::vec3()),
-		tarPos(glm::vec3())
+		tarPos(glm::vec3()),
+		srcNorm(glm::vec3()),
+		tarNorm(glm::vec3())
 	{ }
 
 	MorphEntity(VertexType vertexType) :
 		vertexType(vertexType),
 		srcPos(glm::vec3()),
-		tarPos(glm::vec3())
+		tarPos(glm::vec3()),
+		srcNorm(glm::vec3()),
+		tarNorm(glm::vec3())
 	{ }
 
-	MorphEntity(VertexType vertexType, glm::vec3 srcPos, glm::vec3 tarPos) :
+	MorphEntity(VertexType vertexType, glm::vec3 srcPos, glm::vec3 tarPos, glm::vec3 srcNorm, glm::vec3 tarNorm) :
 		vertexType(vertexType),
 		srcPos(srcPos),
-		tarPos(tarPos)
+		tarPos(tarPos),
+		srcNorm(srcNorm),
+		tarNorm(tarNorm)
 	{ }
 };
 

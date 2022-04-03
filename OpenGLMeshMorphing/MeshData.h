@@ -46,17 +46,20 @@ struct TriangleVertex {
 	int index;
 	glm::vec2 image;
 	bool isBorder;
+	glm::vec3 normal;
 
-	TriangleVertex(int index, glm::vec2 image, bool isBorder) :
+	TriangleVertex(int index, glm::vec2 image, glm::vec3 normal, bool isBorder) :
 		index(index),
 		image(image),
-		isBorder(isBorder)
+		isBorder(isBorder),
+		normal(normal)
 	{ }
 
-	TriangleVertex(VertexData vertexData, glm::vec2 image) :
+	TriangleVertex(VertexData vertexData, glm::vec2 image, glm::vec3 normal) :
 		index(vertexData.eqClass),
 		image(image),
-		isBorder(vertexData.isBorder)
+		isBorder(vertexData.isBorder),
+		normal(normal)
 	{ }
 };
 
@@ -215,7 +218,7 @@ struct Triangle {
 
 	vector<UniqueEdgeData> edges;
 
-	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c, vector<vector<bool>>* context) : a(a), b(b), c(c)
+	Triangle(TriangleVertex a, TriangleVertex b, TriangleVertex c, vector<vector<bool>>& context) : a(a), b(b), c(c)
 	{
 		invAr = 1.0f / (-b.image.y * c.image.x + a.image.y * (-b.image.x + c.image.x) + a.image.x * (b.image.y - c.image.y) + b.image.x * c.image.y);
 
@@ -232,14 +235,15 @@ struct Triangle {
 		UniqueVertexData v3(c.index, c.isBorder);
 
 		edges = vector<UniqueEdgeData>();
-		edges.push_back(UniqueEdgeData(v1, v2, (*context)[v1.eqClass][v2.eqClass]));
-		edges.push_back(UniqueEdgeData(v2, v3, (*context)[v2.eqClass][v3.eqClass]));
-		edges.push_back(UniqueEdgeData(v3, v1, (*context)[v3.eqClass][v1.eqClass]));
+		edges.push_back(UniqueEdgeData(v1, v2, context[v1.eqClass][v2.eqClass]));
+		edges.push_back(UniqueEdgeData(v2, v3, context[v2.eqClass][v3.eqClass]));
+		edges.push_back(UniqueEdgeData(v3, v1, context[v3.eqClass][v1.eqClass]));
 	}
 
-	void getBarycentricCoordinates(glm::vec2 point, float* s, float* t) {
-		*s = invAr * (s1 + s2 * point.x + s3 * point.y);
-		*t = invAr * (t1 + t2 * point.x + t3 * point.y);
+	void getBarycentricCoordinates(glm::vec2 point, float& s, float& t, glm::vec3& normal) {
+		s = invAr * (s1 + s2 * point.x + s3 * point.y);
+		t = invAr * (t1 + t2 * point.x + t3 * point.y);
+		normal = b.normal * s + c.normal * t + (1 - s - t) * a.normal;
 	}
 
 	bool equals(Triangle& e) const {
@@ -317,6 +321,7 @@ private:
 
 	glm::vec3 borderOriginPosition = glm::vec3();
 	bool useCustomBorderOrigin;
+	int borderOrigin = 0;
 
 public:
 	int getVertexCount() { return vertexCount; }
@@ -344,14 +349,14 @@ public:
 	MeshData(Mesh& mesh, float rotation, bool invertBorder);
 	~MeshData();
 	void init();
-	void init(glm::vec3 borderOriginPosition);
+	void init(int origin);
 
 	float tickMap();
 	void harmonizeMap();
 	void addTriangleToEdgeMap(int v1, int v2, int triangle);
 	int getOppositeTriangle(int v1, int v2, int triangle);
-	glm::vec3 findVertexPos(glm::vec2 mapPos, int* triangle);
-	glm::vec3 findBorderPos(float phi);
+	glm::vec3 findVertexPos(glm::vec2 mapPos, int& triangle, glm::vec3& normal);
+	glm::vec3 findBorderPos(float phi, glm::vec3& normal);
 	int getBorderTriangle(float phi);
 	bool isBorder(UniqueEdgeData& e);
 };

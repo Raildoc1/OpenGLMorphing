@@ -56,8 +56,8 @@ int main() {
 	//std::string sourceModelPath = "/Resources/models/tree/tree.gltf";
 	//std::string targetModelPath = "/Resources/models/tree2/tree.gltf";
 
-	std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
-	std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
+	//std::string sourceModelPath = "/Resources/models/Sphere/sphere.gltf";
+	//std::string targetModelPath = "/Resources/models/Suzanne/suzanne.gltf";
 
 	//std::string sourceModelPath = "/Resources/models/Suzanne1/suzanne1.gltf";
 	//std::string targetModelPath = "/Resources/models/Icosphere1/icosphere1.gltf";
@@ -65,9 +65,10 @@ int main() {
 	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
 
-	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string sourceModelPath = "/Resources/models/Alberd/sphere.gltf";
 	//std::string targetModelPath = "/Resources/models/Alberd/alberd_low.gltf";
+	std::string targetModelPath = "/Resources/models/Alberd/alberd_low_sym.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
@@ -75,13 +76,13 @@ int main() {
 	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
 	//MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
 	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
+	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, true);
 
-	sourceData.init();
+	sourceData.init(10);
 
 	glm::vec3 origin = sourceData.vertices[sourceData.border[0].v1.eqClass].vertex.position;
 
-	targetData.init(origin);
+	targetData.init(61);
 
 	HarmonicMapper mapper(sourceData, targetData);
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
@@ -245,7 +246,7 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 
 	glEnable(GL_DEPTH_TEST);
 
-	Shader superShader("super.vert", "super.frag", true);
+	Shader superShader("super.vert", "super.frag", false);
 	SuperMesh* superMesh = mapper->generateSuperMesh();
 
 	superShader.Activate();
@@ -268,7 +269,6 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 
 		lightPos = camera.getLightPosition();
 		glUniform1f(glGetUniformLocation(superShader.ID, "t"), camera.t);
-		std::cout << "lightPos = " << to_string(lightPos) << std::endl;
 		glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 		(*superMesh).Draw(superShader, camera);
 		glfwSwapBuffers(window);

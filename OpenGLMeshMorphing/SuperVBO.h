@@ -7,10 +7,14 @@ struct SuperVertex
 {
 	glm::vec3 position1;
 	glm::vec3 position2;
+	glm::vec3 normal1;
+	glm::vec3 normal2;
 
-	SuperVertex(glm::vec3 srcPos, glm::vec3 tarPos) :
+	SuperVertex(glm::vec3 srcPos, glm::vec3 tarPos, glm::vec3 srcNorm, glm::vec3 tarNorm) :
 		position1(srcPos),
-		position2(tarPos)
+		position2(tarPos),
+		normal1(srcNorm),
+		normal2(tarNorm)
 	{ }
 };
 

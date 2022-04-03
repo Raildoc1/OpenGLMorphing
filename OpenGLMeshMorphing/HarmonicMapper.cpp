@@ -76,18 +76,21 @@ void HarmonicMapper::initMap()
 		int triangle;
 
 		glm::vec3 tarPos;
+		glm::vec3 tarNorm;
 
 		if (!x.second.border) {
-			tarPos = target->findVertexPos(x.second.image, &triangle);
+			tarPos = target->findVertexPos(x.second.image, triangle, tarNorm);
 		}
 		else {
-			tarPos = target->findBorderPos(x.second.phi);
+			tarPos = target->findBorderPos(x.second.phi, tarNorm);
 		}
 
 		finalMorphMap[i] = MorphEntity(
 			VertexType::Source,
 			source->vertices[i].vertex.position,
-			tarPos
+			tarPos,
+			source->vertices[i].vertex.normal,
+			tarNorm
 		);
 	}
 
@@ -103,18 +106,21 @@ void HarmonicMapper::initMap()
 		int triangle;
 
 		glm::vec3 srcPos;
+		glm::vec3 srcNorm;
 
 		if (!x.second.border) {
-			srcPos = source->findVertexPos(x.second.image, &triangle);
+			srcPos = source->findVertexPos(x.second.image, triangle, srcNorm);
 		}
 		else {
-			srcPos = source->findBorderPos(x.second.phi);
+			srcPos = source->findBorderPos(x.second.phi, srcNorm);
 		}
 
 		finalMorphMap[i + vertexCount] = MorphEntity(
 			VertexType::Target,
 			srcPos,
-			target->vertices[i].vertex.position
+			target->vertices[i].vertex.position,
+			srcNorm,
+			target->vertices[i].vertex.normal
 		);
 	}
 }
@@ -398,11 +404,13 @@ void HarmonicMapper::mergeMaps()
 			swapped = true;
 		}
 
+		glm::vec3 normal;
+
 		if (v1.isBorder) {
 			triangleIndex = target->getBorderTriangle(source->unitCircleMap[v1.eqClass].phi);
 		}
 		else {
-			target->findVertexPos(source->unitCircleMap[v1.eqClass].image, &triangleIndex);
+			target->findVertexPos(source->unitCircleMap[v1.eqClass].image, triangleIndex, normal);
 		}
 
 		if (triangleIndex < 0) {
@@ -444,7 +452,9 @@ void HarmonicMapper::mergeMaps()
 				finalMorphMap[intersectionIndex] = MorphEntity(
 					VertexType::Merged,
 					finalMorphMap[e_a.v1].srcPos * (1 - t_src) + finalMorphMap[e_a.v2].srcPos * t_src,
-					finalMorphMap[e_b.v1 + sourceVertexCount].tarPos * (1 - t_tar) + finalMorphMap[e_b.v2 + sourceVertexCount].tarPos * t_tar
+					finalMorphMap[e_b.v1 + sourceVertexCount].tarPos * (1 - t_tar) + finalMorphMap[e_b.v2 + sourceVertexCount].tarPos * t_tar,
+					glm::normalize(finalMorphMap[e_a.v1].srcNorm * (1 - t_src) + finalMorphMap[e_a.v2].srcNorm * t_src),
+					glm::normalize(finalMorphMap[e_b.v1 + sourceVertexCount].tarNorm * (1 - t_tar) + finalMorphMap[e_b.v2 + sourceVertexCount].tarNorm * t_tar)
 				);
 				map[intersectionIndex] = MapEntity(intersection);
 
@@ -573,18 +583,22 @@ void HarmonicMapper::retriangulate()
 				edgesUsed[p.v2][p.v1]++;
 			}
 
-			SuperVertex originSuperVertex(finalMorphMap[origin].srcPos, finalMorphMap[origin].tarPos);
+			SuperVertex originSuperVertex(finalMorphMap[origin].srcPos, finalMorphMap[origin].tarPos, finalMorphMap[origin].srcNorm, finalMorphMap[origin].tarNorm);
 
 			int polygonEdgesAmount = polygonList.size();
 			for (int i = 1; i < polygonEdgesAmount - 1; i++)
 			{
 				SuperVertex v1(
 					finalMorphMap[polygonList[i].v1].srcPos,
-					finalMorphMap[polygonList[i].v1].tarPos
+					finalMorphMap[polygonList[i].v1].tarPos,
+					finalMorphMap[polygonList[i].v1].srcNorm,
+					finalMorphMap[polygonList[i].v1].tarNorm
 				);
 				SuperVertex v2(
 					finalMorphMap[polygonList[i + 1].v1].srcPos,
-					finalMorphMap[polygonList[i + 1].v1].tarPos
+					finalMorphMap[polygonList[i + 1].v1].tarPos,
+					finalMorphMap[polygonList[i + 1].v1].srcNorm,
+					finalMorphMap[polygonList[i + 1].v1].tarNorm
 				);
 
 				superVertices.push_back(originSuperVertex);

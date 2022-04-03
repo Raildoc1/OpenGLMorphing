@@ -49,9 +49,9 @@ MeshData::~MeshData()
 	delete k;
 }
 
-void MeshData::init(glm::vec3 borderOriginPosition)
+void MeshData::init(int origin)
 {
-	this->borderOriginPosition = borderOriginPosition;
+	this->borderOrigin = origin;
 	this->useCustomBorderOrigin = true;
 	init();
 }
@@ -190,11 +190,13 @@ void MeshData::initTriangles()
 		VertexData v2 = vertices[fixedIndices[i + 1]];
 		VertexData v3 = vertices[fixedIndices[i + 2]];
 
-		TriangleVertex a(v1, unitCircleMap[v1.eqClass].image);
-		TriangleVertex b(v2, unitCircleMap[v2.eqClass].image);
-		TriangleVertex c(v3, unitCircleMap[v3.eqClass].image);
+		TriangleVertex a(v1, unitCircleMap[v1.eqClass].image, vertices[fixedIndices[i + 0]].vertex.normal);
+		TriangleVertex b(v2, unitCircleMap[v2.eqClass].image, vertices[fixedIndices[i + 1]].vertex.normal);
+		TriangleVertex c(v3, unitCircleMap[v3.eqClass].image, vertices[fixedIndices[i + 2]].vertex.normal);
 
-		Triangle triangle(a, b, c, &borderMatrix);
+		glm::vec3 normal = glm::normalize(glm::cross(v1.vertex.position - v2.vertex.position, v3.vertex.position - v2.vertex.position));
+
+		Triangle triangle(a, b, c, borderMatrix);
 		triangles.push_back(triangle);
 
 		addTriangleToEdgeMap(v1.eqClass, v2.eqClass, triangles.size() - 1);
@@ -310,7 +312,12 @@ void MeshData::sortBorder()
 	float minDistance = std::numeric_limits<float>::infinity();
 	int minI = 0;
 
-	if (useCustomBorderOrigin) {
+	for (size_t i = 0; i < border.size(); i++)
+	{
+		std::cout << i << ": " << to_string(vertices[border[i].v1.eqClass].vertex.position) << std::endl;
+	}
+
+	/*if (useCustomBorderOrigin) {
 		for (size_t i = 0; i < border.size(); i++)
 		{
 			float distance = glm::distance(vertices[border[i].v1.eqClass].vertex.position, borderOriginPosition);
@@ -326,6 +333,13 @@ void MeshData::sortBorder()
 			border.push_back(e);
 			border.erase(border.begin());
 		}
+	}*/
+
+	for (size_t i = 0; i < borderOrigin; i++)
+	{
+		EdgeData e = border[0];
+		border.push_back(e);
+		border.erase(border.begin());
 	}
 }
 
@@ -653,10 +667,10 @@ void MeshData::initMap()
 	}
 }
 
-glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
+glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int& triangle, glm::vec3& normal) {
 	float s = 0.0f;
 	float t = 0.0f;
-	*triangle = -1;
+	triangle = -1;
 
 	float min_bar = 100.0f;
 	float min_s = 100.0f;
@@ -666,7 +680,7 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 	{
 		auto candidate_triangle = triangles[i];
 
-		candidate_triangle.getBarycentricCoordinates(mapPos, &s, &t);
+		candidate_triangle.getBarycentricCoordinates(mapPos, s, t, normal);
 
 		glm::vec3 v1 = vertices[candidate_triangle.a.index].vertex.position;
 		glm::vec3 v2 = vertices[candidate_triangle.b.index].vertex.position;
@@ -676,7 +690,7 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 			if (s < 0.0f || t < 0.0f) {
 				std::cout << "ERROR: findVertexPos: coordinates are negative! { s = " << s << ", t = " << t << " }" << std::endl;
 			}
-			*triangle = i;
+			triangle = i;
 			return v1 + (v2 - v1) * s + (v3 - v1) * t;
 		}
 
@@ -694,12 +708,13 @@ glm::vec3 MeshData::findVertexPos(glm::vec2 mapPos, int* triangle) {
 
 	glm::vec2 norm = glm::normalize(mapPos);
 	float phi = atan2(norm.x, norm.y);
-	*triangle = getBorderTriangle(phi);
+	triangle = getBorderTriangle(phi);
+	triangles[triangle].getBarycentricCoordinates(mapPos, s, t, normal);
 
 	return glm::vec3(0.0f);
 }
 
-glm::vec3 MeshData::findBorderPos(float phi) {
+glm::vec3 MeshData::findBorderPos(float phi, glm::vec3& normal) {
 
 	float pi = glm::pi<float>();
 
@@ -737,6 +752,8 @@ glm::vec3 MeshData::findBorderPos(float phi) {
 			//std::cout << phi1 << " < " << phi << " < " << phi2 << std::endl;
 			if (phi1 <= phi && phi <= phi2) {
 				float t = (phi - phi1) / (phi2 - phi1);
+				normal = vertices[borderVertices[j].eqClass].vertex.normal * t +
+					vertices[borderVertices[i].eqClass].vertex.normal * (1.0f - t);
 				return vertices[borderVertices[j].eqClass].vertex.position * t +
 					vertices[borderVertices[i].eqClass].vertex.position * (1.0f - t);
 			}
