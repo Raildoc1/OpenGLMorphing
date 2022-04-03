@@ -72,13 +72,16 @@ int main() {
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
 
-	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
 	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	//MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
+	//MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
+	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
+	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
 
 	sourceData.init();
-	targetData.init();
+
+	glm::vec3 origin = sourceData.vertices[sourceData.border[0].v1.eqClass].vertex.position;
+
+	targetData.init(origin);
 
 	HarmonicMapper mapper(sourceData, targetData);
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
@@ -263,7 +266,10 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 		camera.Inputs(window);
 		camera.updateMatrix(45.0f, 0.1f, 100.0f);
 
+		lightPos = camera.getLightPosition();
 		glUniform1f(glGetUniformLocation(superShader.ID, "t"), camera.t);
+		std::cout << "lightPos = " << to_string(lightPos) << std::endl;
+		glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 		(*superMesh).Draw(superShader, camera);
 		glfwSwapBuffers(window);
 		glfwPollEvents();

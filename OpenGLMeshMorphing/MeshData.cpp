@@ -9,13 +9,13 @@ void print_time_stamp(const clock_t& prev, const std::string msg) {
 	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
 }
 
-MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
+MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false) :
+	mesh(mesh),
+	vertexCount(mesh.vertices.size()),
+	edgesCount(mesh.indices.size()),
+	rotation(rotation),
+	invertBorder(invertBorder)
 {
-	this->mesh = mesh;
-	this->vertexCount = mesh.vertices.size();
-	this->edgesCount = mesh.indices.size();
-	this->rotation = rotation;
-	this->invertBorder = invertBorder;
 
 	vertices = vector<VertexData>(vertexCount);
 	edges = vector<EdgeData>(edgesCount);
@@ -47,6 +47,13 @@ MeshData::~MeshData()
 	}
 
 	delete k;
+}
+
+void MeshData::init(glm::vec3 borderOriginPosition)
+{
+	this->borderOriginPosition = borderOriginPosition;
+	this->useCustomBorderOrigin = true;
+	init();
 }
 
 void MeshData::init()
@@ -288,12 +295,36 @@ void MeshData::sortBorder()
 	{
 		for (size_t j = i + 1; j < border.size(); j++)
 		{
-			if (border[i].adjacent(border[j]) && (i + 1 != j)) {
+			if (border[i].adjacent(border[j])) {
+				if (i + 1 == j) {
+					break;
+				}
 				EdgeData t = border[i + 1];
 				border[i + 1] = border[j];
 				border[j] = t;
 				break;
 			}
+		}
+	}
+
+	float minDistance = std::numeric_limits<float>::infinity();
+	int minI = 0;
+
+	if (useCustomBorderOrigin) {
+		for (size_t i = 0; i < border.size(); i++)
+		{
+			float distance = glm::distance(vertices[border[i].v1.eqClass].vertex.position, borderOriginPosition);
+			if (distance < minDistance) {
+				minDistance = distance;
+				minI = i;
+			}
+		}
+
+		for (size_t i = 0; i < minI; i++)
+		{
+			EdgeData e = border[0];
+			border.push_back(e);
+			border.erase(border.begin());
 		}
 	}
 }

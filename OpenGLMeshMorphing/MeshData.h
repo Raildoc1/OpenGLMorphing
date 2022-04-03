@@ -283,7 +283,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::Kanai;
+	CoeffType coeffType = CoeffType::One;
 
 	int vertexCount;
 	int edgesCount;
@@ -315,6 +315,9 @@ private:
 
 	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
 
+	glm::vec3 borderOriginPosition = glm::vec3();
+	bool useCustomBorderOrigin;
+
 public:
 	int getVertexCount() { return vertexCount; }
 	int getEdgesCount() { return edgesCount; }
@@ -341,6 +344,7 @@ public:
 	MeshData(Mesh& mesh, float rotation, bool invertBorder);
 	~MeshData();
 	void init();
+	void init(glm::vec3 borderOriginPosition);
 
 	float tickMap();
 	void harmonizeMap();

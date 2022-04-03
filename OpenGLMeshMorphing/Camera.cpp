@@ -78,6 +78,38 @@ void Camera::Inputs(GLFWwindow* window)
 		}
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_LEFT))
+	{
+		phi -= 0.05f;
+		if (phi < 0.0f) {
+			phi = 6.28f;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_RIGHT))
+	{
+		phi += 0.05f;
+		if (phi > 6.28f) {
+			phi = 0.0f;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_UP))
+	{
+		teta += 0.05f;
+		if (teta > 3.14f) {
+			teta = 3.14f;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_DOWN))
+	{
+		teta -= 0.05f;
+		if (teta < 0.0f) {
+			teta = 0.0f;
+		}
+	}
+
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{

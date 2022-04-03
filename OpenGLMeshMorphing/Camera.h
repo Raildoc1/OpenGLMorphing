@@ -30,6 +30,9 @@ public:
 
 	float t = 0.0f;
 	
+	float phi = 0.0f;
+	float teta = 0.0f;
+
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 	bool firstRClick = true;
@@ -51,5 +54,7 @@ public:
 	void Matrix(Shader& shader, const char* uniform);
 	// Handles camera inputs
 	void Inputs(GLFWwindow* window);
+
+	glm::vec3 getLightPosition() { return glm::vec3(sin(teta) * sin(phi), cos(teta), sin(teta) * cos(phi)); }
 };
 #endif
