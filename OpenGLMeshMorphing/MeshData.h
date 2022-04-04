@@ -340,7 +340,7 @@ public:
 	vector<int> vertexSetList;
 	vector<Triangle> triangles;
 	vector<vector<int>> meshMatrix;
-
+	vector<vector<UniqueEdgeData>> adjacencyList;
 	vector<vector<vector<int>>> edgesToTriangles;
 
 	float** k;
@@ -359,4 +359,5 @@ public:
 	glm::vec3 findBorderPos(float phi, glm::vec3& normal);
 	int getBorderTriangle(float phi);
 	bool isBorder(UniqueEdgeData& e);
+	bool checkMapValidity(std::map<int, MapEntity>& map, vector<int>& verticesToCheck);
 };

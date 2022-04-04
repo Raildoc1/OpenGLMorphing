@@ -79,6 +79,16 @@ struct ClockwiseComparator {
 	}
 };
 
+struct Feature {
+	int srcEqClass;
+	int tarEqClass;
+
+	Feature(int srcEqClass, int tarEqClass) :
+		srcEqClass(srcEqClass),
+		tarEqClass(tarEqClass)
+	{ }
+};
+
 class HarmonicMapper
 {
 private:
@@ -108,8 +118,10 @@ public:
 
 	HarmonicMapper(MeshData& source, MeshData& target);
 
+	void init(vector<Feature>& features);
 	void init();
 	void initMap();
+	void adjustFeatures(vector<Feature>& features);
 	void mergeMaps();
 	void initEdges();
 	void fixMapBound();

@@ -13,6 +13,7 @@ namespace fs = std::filesystem;
 #include <glm/gtx/string_cast.hpp>
 
 #include <Eigen/Dense>
+#include "Utils.h"
 
 enum class ViewMode { Super, Map };
 
@@ -21,7 +22,7 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Super
+#define mode           ViewMode::Map
 #define draw_src_map   true
 #define draw_tar_map   true
 #define draw_super_map true
@@ -65,9 +66,13 @@ int main() {
 	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
 	//std::string targetModelPath = "/Resources/models/human_head/human_head.gltf";
 
-	std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	//std::string sourceModelPath = "/Resources/models/suzanne_head/suzanne_head.gltf";
+	//std::string sourceModelPath = "/Resources/models/human_head/human_head.gltf";
 	//std::string sourceModelPath = "/Resources/models/Alberd/sphere.gltf";
 	//std::string targetModelPath = "/Resources/models/Alberd/alberd_low.gltf";
+	//std::string targetModelPath = "/Resources/models/Alberd/alberd_high.gltf";
+
+	std::string sourceModelPath = "/Resources/models/human_head/human_head_high.gltf";
 	std::string targetModelPath = "/Resources/models/Alberd/alberd_low_sym.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
@@ -76,12 +81,9 @@ int main() {
 	//MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
 	//MeshData targetData = MeshData(targetModel.GetMesh(), 3 * glm::pi<float>() / 4.0f, true);
 	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
-	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, true);
+	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
 
-	sourceData.init(10);
-
-	glm::vec3 origin = sourceData.vertices[sourceData.border[0].v1.eqClass].vertex.position;
-
+	sourceData.init(71);
 	targetData.init(61);
 
 	HarmonicMapper mapper(sourceData, targetData);

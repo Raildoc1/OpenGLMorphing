@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <Eigen/Dense>
 #include <glm/gtx/string_cast.hpp>
+#include "Utils.h"
 
 void print_time_stamp(const clock_t& prev, const std::string msg) {
 	std::cout << std::setw(30) << msg << std::setw(30) << float(clock() - prev) / CLOCKS_PER_SEC << " seconds." << std::endl;
@@ -37,6 +38,7 @@ MeshData::MeshData(Mesh& mesh, float rotation = 0.0f, bool invertBorder = false)
 	triangles = vector<Triangle>();
 	meshMatrix = vector<vector<int>>(vertexCount, vector<int>(vertexCount, -1));
 	edgesToTriangles = vector<vector<vector<int>>>(vertexCount, vector<vector<int>>(vertexCount, vector<int>(2, -1)));
+	adjacencyList = vector<vector<UniqueEdgeData>>(vertexCount, vector<UniqueEdgeData>());
 }
 
 MeshData::~MeshData()
@@ -58,6 +60,7 @@ void MeshData::init(int origin)
 
 void MeshData::init()
 {
+	std::cout << "initializing mesh..." << std::endl;
 	clock_t time_stamp = clock();
 
 	initVertices();
@@ -142,6 +145,7 @@ void MeshData::initVertices()
 		data.eqClass = -1;
 		data.isBorder = false;
 
+
 		for (size_t j = 0; j < vertexCount; j++)
 		{
 			glm::vec3 pos1 = mesh.vertices[i].position;
@@ -168,6 +172,16 @@ void MeshData::initVertices()
 				vertices[i].setIndex = j;
 				break;
 			}
+		}
+	}
+
+	for (size_t i = 0; i < vertexCount; i++)
+	{
+		if (glm::distance(vertices[i].vertex.position, glm::vec3(7.5919f, -4.6609f, -0.011087f)) < 0.01f) {
+			std::cout << vertices[i].eqClass << ": " << to_string(vertices[i].vertex.position) << std::endl;
+		}
+		if (glm::distance(vertices[i].vertex.position, glm::vec3(3.0009f, -2.3654f, -0.00067f)) < 0.01f) {
+			std::cout << vertices[i].eqClass << ": " << to_string(vertices[i].vertex.position) << std::endl;
 		}
 	}
 
@@ -363,6 +377,8 @@ void MeshData::initUniqueEdges()
 		if (!isDuplicate) {
 			meshMatrix[e.v1][e.v2] = meshMatrix[e.v2][e.v1] = uniqueEdges.size();
 			uniqueEdges.push_back(e);
+			adjacencyList[e.v1].push_back(e);
+			adjacencyList[e.v2].push_back(e.turn());
 		}
 	}
 }
@@ -811,6 +827,48 @@ int MeshData::getBorderTriangle(float phi)
 	}
 
 	return -1;
+}
+
+bool MeshData::checkMapValidity(std::map<int, MapEntity>& map, vector<int>& verticesToCheck)
+{
+	for (auto& v : verticesToCheck)
+	{
+		if (map[v].border) {
+			continue;
+		}
+		
+		size_t polygonSize = adjacencyList[v].size();
+
+		vector<glm::vec2> polygon = vector<glm::vec2>(polygonSize);
+		vector<int> polygonIndices = vector<int>(polygonSize);
+
+		for (size_t i = 0; i < polygonSize; i++)
+		{
+			polygon[i] = map[adjacencyList[v][i].v2].image;
+			polygonIndices[i] = adjacencyList[v][i].v2;
+		}
+
+		for (size_t i = 1; i < polygonSize - 1; i++)
+		{
+			for (size_t j = i + 1; j < polygonSize; j++)
+			{
+				if (meshMatrix[polygonIndices[i]][polygonIndices[j]] >= 0) {
+					if (j == i + 1) {
+						break;
+					}
+					std::swap(polygon[i], polygon[j]);
+					std::swap(polygonIndices[i], polygonIndices[j]);
+					break;
+				}
+			}
+		}
+
+		if (!Utils::pointInPolygon(map[v].image, polygon)) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool MeshData::isBorder(UniqueEdgeData& e)

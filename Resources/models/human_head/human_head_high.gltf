@@ -15,12 +15,12 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "human_head"
+            "name" : "human_head_high_fixed"
         }
     ],
     "meshes" : [
         {
-            "name" : "Head",
+            "name" : "Head.002",
             "primitives" : [
                 {
                     "attributes" : {
@@ -37,64 +37,64 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 3235,
             "max" : [
-                10.726264953613281,
-                0.0012072157114744186,
-                15.216872215270996
+                5.273682117462158,
+                -0.002286412985995412,
+                7.591885566711426
             ],
             "min" : [
-                -9.882420539855957,
-                -23.991430282592773,
-                -6.0843281745910645
+                -4.9037184715271,
+                -11.957808494567871,
+                -2.9958443641662598
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 3235,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 3235,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 5196,
+            "count" : 15588,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 10704,
+            "byteLength" : 38820,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 10704,
-            "byteOffset" : 10704
+            "byteLength" : 38820,
+            "byteOffset" : 38820
         },
         {
             "buffer" : 0,
-            "byteLength" : 7136,
-            "byteOffset" : 21408
+            "byteLength" : 25880,
+            "byteOffset" : 77640
         },
         {
             "buffer" : 0,
-            "byteLength" : 10392,
-            "byteOffset" : 28544
+            "byteLength" : 31176,
+            "byteOffset" : 103520
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 38936,
-            "uri" : "human_head.bin"
+            "byteLength" : 134696,
+            "uri" : "human_head_high.bin"
         }
     ]
 }

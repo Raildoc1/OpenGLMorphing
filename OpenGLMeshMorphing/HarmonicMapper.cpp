@@ -24,6 +24,12 @@ HarmonicMapper::HarmonicMapper(MeshData& source, MeshData& target)
 	targetIntersections = std::vector<std::vector<IntersectionEntity>>(target.uniqueEdges.size(), std::vector<IntersectionEntity>());
 }
 
+void HarmonicMapper::init(vector<Feature>& features)
+{
+	adjustFeatures(features);
+	init();
+}
+
 void HarmonicMapper::init()
 {
 	clock_t time_stamp = clock();
@@ -123,6 +129,46 @@ void HarmonicMapper::initMap()
 			target->vertices[i].vertex.normal
 		);
 	}
+}
+
+void HarmonicMapper::adjustFeatures(vector<Feature>& features)
+{
+	float d = 0.5f;
+
+	vector<glm::vec2> w = vector<glm::vec2>(features.size());
+	vector<float> sourceD = vector<float>(features.size(), 0.5f);
+	vector<float> targetD = vector<float>(features.size(), 0.5f);
+	vector<glm::vec2> sourceT = vector<glm::vec2>(features.size());
+	vector<glm::vec2> targetT = vector<glm::vec2>(features.size());
+	vector<glm::vec2> sourceFeaturePositions = vector<glm::vec2>(features.size());
+	vector<glm::vec2> targetFeaturePositions = vector<glm::vec2>(features.size());
+
+	for (size_t i = 0; i < features.size(); i++)
+	{
+		sourceFeaturePositions[i] = source->unitCircleMap[features[i].srcEqClass].image;
+		targetFeaturePositions[i] = target->unitCircleMap[features[i].tarEqClass].image;
+		w[i] = 0.5f * (sourceFeaturePositions[i] + targetFeaturePositions[i]);
+		sourceT[i] = w[i] - sourceFeaturePositions[i];
+		targetT[i] = w[i] - targetFeaturePositions[i];
+	}
+
+	std::map<int, MapEntity> srcMap = source->unitCircleMap;
+	std::map<int, MapEntity> tarMap = target->unitCircleMap;
+
+	bool changed = false;
+	do {
+		changed = false;
+		for (size_t i = 0; i < features.size(); i++)
+		{
+			sourceT[i] = w[i] - sourceFeaturePositions[i];
+		}
+
+		do {
+
+		} while (false);
+
+	} while (changed);
+
 }
 
 void HarmonicMapper::initEdges()
@@ -366,18 +412,8 @@ void HarmonicMapper::mergeMaps()
 	vector<UniqueEdgeData> work_list = vector<UniqueEdgeData>();
 	vector<UniqueEdgeData> candidate_list = vector<UniqueEdgeData>();
 	vector<vector<bool>> used_edges = vector<vector<bool>>(sourceVertexCount, vector<bool>(sourceVertexCount, false));
-	vector<vector<UniqueEdgeData>> source_edges = vector<vector<UniqueEdgeData>>(sourceVertexCount, vector<UniqueEdgeData>());
 
-	for (size_t i = 0; i < source->uniqueEdges.size(); i++)
-	{
-		int v1 = source->uniqueEdges[i].v1;
-		int v2 = source->uniqueEdges[i].v2;
-
-		source_edges[v1].push_back(source->uniqueEdges[i]);
-		source_edges[v2].push_back(source->uniqueEdges[i].turn());
-	}
-
-	for (auto& e : source_edges[v1])
+	for (auto& e : source->adjacencyList[v1])
 	{
 		work_list.push_back(e);
 		used_edges[e.v1][e.v2] = used_edges[e.v2][e.v1] = true;
@@ -477,7 +513,7 @@ void HarmonicMapper::mergeMaps()
 		}
 
 		int nextOrigin = swapped ? v1.eqClass : v2.eqClass;
-		for (auto& e : source_edges[nextOrigin])
+		for (auto& e : source->adjacencyList[nextOrigin])
 		{
 			if (used_edges[e.v1][e.v2]) {
 				continue;

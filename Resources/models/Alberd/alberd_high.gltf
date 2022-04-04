@@ -15,12 +15,28 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "human_head"
+            "name" : "AlbertEinstein.001"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "name" : "Material",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.800000011920929,
+                    0.800000011920929,
+                    0.800000011920929,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
         }
     ],
     "meshes" : [
         {
-            "name" : "Head",
+            "name" : "AlbertEinstein.001",
             "primitives" : [
                 {
                     "attributes" : {
@@ -28,7 +44,8 @@
                         "NORMAL" : 1,
                         "TEXCOORD_0" : 2
                     },
-                    "indices" : 3
+                    "indices" : 3,
+                    "material" : 0
                 }
             ]
         }
@@ -37,64 +54,64 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 33746,
             "max" : [
-                10.726264953613281,
-                0.0012072157114744186,
-                15.216872215270996
+                2.5617613792419434,
+                -0.08744649589061737,
+                3.0014631748199463
             ],
             "min" : [
-                -9.882420539855957,
-                -23.991430282592773,
-                -6.0843281745910645
+                -2.5617613792419434,
+                -5.459879398345947,
+                -2.37070894241333
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 33746,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 892,
+            "count" : 33746,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 5196,
+            "count" : 114768,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 10704,
+            "byteLength" : 404952,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 10704,
-            "byteOffset" : 10704
+            "byteLength" : 404952,
+            "byteOffset" : 404952
         },
         {
             "buffer" : 0,
-            "byteLength" : 7136,
-            "byteOffset" : 21408
+            "byteLength" : 269968,
+            "byteOffset" : 809904
         },
         {
             "buffer" : 0,
-            "byteLength" : 10392,
-            "byteOffset" : 28544
+            "byteLength" : 229536,
+            "byteOffset" : 1079872
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 38936,
-            "uri" : "human_head.bin"
+            "byteLength" : 1309408,
+            "uri" : "alberd_high.bin"
         }
     ]
 }
