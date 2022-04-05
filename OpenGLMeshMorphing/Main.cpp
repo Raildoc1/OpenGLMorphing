@@ -22,7 +22,7 @@ const unsigned int height = 1000;
 
 float scale = 0.0f;
 
-#define mode           ViewMode::Map
+#define mode           ViewMode::Super
 #define draw_src_map   true
 #define draw_tar_map   true
 #define draw_super_map true
@@ -90,7 +90,8 @@ int main() {
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	if (mode == ViewMode::Super || draw_super_map) {
-		mapper.init();
+		vector<Feature> features { Feature(2992, 1982) };
+		mapper.init(features);
 	}
 
 	glfwSetScrollCallback(window, scroll_callback);

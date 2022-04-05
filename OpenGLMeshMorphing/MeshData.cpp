@@ -191,6 +191,8 @@ void MeshData::initVertices()
 void MeshData::initTriangles()
 {
 	vector<vector<bool>> borderMatrix = vector<vector<bool>>(vertexCount, vector<bool>(vertexCount, false));
+	edgesToTriangles = vector<vector<vector<int>>>(vertexCount, vector<vector<int>>(vertexCount, vector<int>(2, -1)));
+	triangles.clear();
 
 	for (size_t i = 0; i < edges.size(); i++)
 	{
@@ -856,14 +858,15 @@ bool MeshData::checkMapValidity(std::map<int, MapEntity>& map, vector<int>& vert
 					if (j == i + 1) {
 						break;
 					}
-					std::swap(polygon[i], polygon[j]);
-					std::swap(polygonIndices[i], polygonIndices[j]);
+					std::swap(polygon[i + 1], polygon[j]);
+					std::swap(polygonIndices[i + 1], polygonIndices[j]);
 					break;
 				}
 			}
 		}
 
-		if (!Utils::pointInPolygon(map[v].image, polygon)) {
+		bool pointInPolygon = Utils::pointInPolygon(map[v].image, polygon);
+		if (!pointInPolygon) {
 			return false;
 		}
 	}

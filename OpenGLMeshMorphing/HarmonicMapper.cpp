@@ -133,8 +133,6 @@ void HarmonicMapper::initMap()
 
 void HarmonicMapper::adjustFeatures(vector<Feature>& features)
 {
-	float d = 0.5f;
-
 	vector<glm::vec2> w = vector<glm::vec2>(features.size());
 	vector<float> sourceD = vector<float>(features.size(), 0.5f);
 	vector<float> targetD = vector<float>(features.size(), 0.5f);
@@ -155,20 +153,125 @@ void HarmonicMapper::adjustFeatures(vector<Feature>& features)
 	std::map<int, MapEntity> srcMap = source->unitCircleMap;
 	std::map<int, MapEntity> tarMap = target->unitCircleMap;
 
+	vector<int> changedVertices = vector<int>();
 	bool changed = false;
-	do {
-		changed = false;
-		for (size_t i = 0; i < features.size(); i++)
-		{
-			sourceT[i] = w[i] - sourceFeaturePositions[i];
-		}
+	float d = 1.0f;
 
+	while (d > 0.0f) {
 		do {
+			changed = false;
+			for (size_t i = 0; i < features.size(); i++)
+			{
+				sourceFeaturePositions[i] = source->unitCircleMap[features[i].srcEqClass].image;
+				sourceT[i] = w[i] - sourceFeaturePositions[i];
+			}
 
-		} while (false);
+			for (size_t i = 0; i < features.size(); i++)
+			{
+				if (glm::length(sourceT[i]) < 0.001f) {
+					continue;
+				}
 
-	} while (changed);
+				float t = 1.0f;
 
+				do {
+					changedVertices.clear();
+					srcMap = source->unitCircleMap;
+
+					std::cout << to_string(sourceFeaturePositions[i]) << " ->  " << to_string(w[i]) << " ";
+
+					for (auto& m : srcMap) {
+
+						if (m.second.border) {
+							continue;
+						}
+
+						float featureDistance = glm::distance(m.second.image, sourceFeaturePositions[i]);
+
+						if (featureDistance > d) {
+							continue;
+						}
+
+						m.second.image += t * sourceT[i] * (d - featureDistance);
+						changedVertices.push_back(m.first);
+					}
+					t *= 0.9f;
+					std::cout << "map valid = " << source->checkMapValidity(srcMap, changedVertices) << std::endl;
+				} while ((changedVertices.size() > 0 && !source->checkMapValidity(srcMap, changedVertices)) || t > 0.01f);
+
+				source->unitCircleMap = srcMap;
+				sourceFeaturePositions[i] = source->unitCircleMap[features[i].srcEqClass].image;
+				glm::vec2 newT = w[i] - sourceFeaturePositions[i];
+
+				if (glm::distance(newT, sourceT[i]) > 0.0001f) {
+					changed = true;
+				}
+			}
+		} while (changed);
+		d -= 0.11f;
+	}
+
+	d = 1.0f;
+
+	while (d > 0.0f) {
+		do {
+			changed = false;
+			for (size_t i = 0; i < features.size(); i++)
+			{
+				targetFeaturePositions[i] = target->unitCircleMap[features[i].tarEqClass].image;
+				targetT[i] = w[i] - targetFeaturePositions[i];
+			}
+
+			for (size_t i = 0; i < features.size(); i++)
+			{
+				if (glm::length(targetT[i]) < 0.001f) {
+					continue;
+				}
+
+				std::cout << glm::length(targetT[i]) << std::endl;
+
+				float t = 1.0f;
+
+				do {
+					changedVertices.clear();
+					tarMap = target->unitCircleMap;
+
+					std::cout << to_string(targetFeaturePositions[i]) << " ->  " << to_string(w[i]) << " ";
+
+					for (auto& m : tarMap) {
+						if (m.second.border) {
+							continue;
+						}
+
+						float featureDistance = glm::distance(m.second.image, targetFeaturePositions[i]);
+
+						if (featureDistance > d) {
+							continue;
+						}
+
+						m.second.image += t * targetT[i] * (d - featureDistance);
+						changedVertices.push_back(m.first);
+					}
+					t *= 0.9f;
+					std::cout << "map valid = " << target->checkMapValidity(tarMap, changedVertices) << std::endl;
+				} while (changedVertices.size() > 0 && !target->checkMapValidity(tarMap, changedVertices) && t > 0.01f);
+
+				target->unitCircleMap = tarMap;
+				targetFeaturePositions[i] = target->unitCircleMap[features[i].tarEqClass].image;
+				glm::vec2 newT = w[i] - targetFeaturePositions[i];
+
+				if (glm::distance(newT, targetT[i]) > 0.0001f) {
+					changed = true;
+				}
+			}
+		} while (changed);
+		d -= 0.11f;
+	}
+
+	source->initTriangles();
+	target->initTriangles();
+
+	std::cout << "features adjusted successfully!" << std::endl;
 }
 
 void HarmonicMapper::initEdges()

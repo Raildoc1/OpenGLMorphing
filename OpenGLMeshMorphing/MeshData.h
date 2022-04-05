@@ -287,7 +287,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::One;
+	CoeffType coeffType = CoeffType::Kanai;
 
 	int vertexCount;
 	int edgesCount;
@@ -314,7 +314,6 @@ private:
 	void initHarmonicK();
 	void initLambda();
 	void initMap();
-	void initTriangles();
 	void initFixedIndices();
 
 	int edgeInTriangle(int e1, int e2, int t1, int t2, int t3);
@@ -350,6 +349,7 @@ public:
 	~MeshData();
 	void init();
 	void init(int origin);
+	void initTriangles();
 
 	float tickMap();
 	void harmonizeMap();
