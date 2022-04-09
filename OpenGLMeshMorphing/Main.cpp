@@ -44,6 +44,7 @@ int main() {
 	std::cout << "glfwInit finished in " << float(clock() - begin_time) / CLOCKS_PER_SEC << " seconds." << std::endl;
 
 	GLFWwindow* window = create_window();
+	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	if (window == nullptr) {
 		return -1;
@@ -72,8 +73,11 @@ int main() {
 	//std::string targetModelPath = "/Resources/models/Alberd/alberd_low.gltf";
 	//std::string targetModelPath = "/Resources/models/Alberd/alberd_high.gltf";
 
-	std::string sourceModelPath = "/Resources/models/human_head/human_head_high.gltf";
+	std::string sourceModelPath = "/Resources/models/human_head/human_head_fixed.gltf";
 	std::string targetModelPath = "/Resources/models/Alberd/alberd_low_sym.gltf";
+
+	//std::string sourceModelPath = "/Resources/models/wine/wine_glass.gltf";
+	//std::string targetModelPath = "/Resources/models/screw/screw.gltf";
 
 	Model sourceModel((parentDir + sourceModelPath).c_str());
 	Model targetModel((parentDir + targetModelPath).c_str());
@@ -83,15 +87,51 @@ int main() {
 	MeshData sourceData = MeshData(sourceModel.GetMesh(), 0.0f, false);
 	MeshData targetData = MeshData(targetModel.GetMesh(), 0.0f, false);
 
-	sourceData.init(71);
-	targetData.init(61);
+	/*Shader meshShader("default.vert", "default.frag", false);
+
+	glm::vec4 lightColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
+	glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, -5.0f);
+	glm::mat4 lightModel = glm::mat4(1.0f);
+	lightModel = glm::translate(lightModel, lightPos);
+
+	meshShader.Activate();
+	glUniform4f(glGetUniformLocation(meshShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+
+	glEnable(GL_DEPTH_TEST);
+
+	while (!camera.enterEverPressed) {
+		camera.Inputs(window);
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		camera.Inputs(window);
+		camera.updateMatrix(45.0f, 0.1f, 100.0f);
+
+		lightPos = camera.getLightPosition();
+		glUniform3f(glGetUniformLocation(meshShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+		if (camera.drawSourceMesh) {
+			sourceModel.Draw(meshShader, camera);
+		} else {
+			targetModel.Draw(meshShader, camera);
+		}
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+	meshShader.Delete();*/
+
+	sourceData.init(25);
+	targetData.init(48);
+
+	//sourceData.init();
+	//targetData.init();
 
 	HarmonicMapper mapper(sourceData, targetData);
-	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
 	if (mode == ViewMode::Super || draw_super_map) {
-		vector<Feature> features { Feature(2992, 1982) };
+		vector<Feature> features { Feature(3421, 3600) }; //human_head -> alberd
 		mapper.init(features);
+
+		//mapper.init();
 	}
 
 	glfwSetScrollCallback(window, scroll_callback);
@@ -236,16 +276,11 @@ void draw_map(MeshData* src, MeshData* tar, HarmonicMapper* mapper, GLFWwindow* 
 }
 
 void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera) {
-	Shader meshShader("default.vert", "default.frag", false);
-
-	glm::vec4 lightColor = glm::vec4(0.43f, 0.91f, 0.85f, 1.0f);
+	//glm::vec4 lightColor = glm::vec4(0.43f, 0.91f, 0.85f, 1.0f);
+	glm::vec4 lightColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 	glm::vec3 lightPos = glm::vec3(0.0f, 0.0f, -5.0f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
-
-	meshShader.Activate();
-	glUniform4f(glGetUniformLocation(meshShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(meshShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -278,44 +313,5 @@ void draw_super_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera)
 		glfwPollEvents();
 	}
 
-	meshShader.Delete();
+	superShader.Delete();
 }
-
-//void draw_wired_mesh(HarmonicMapper* mapper, GLFWwindow* window, Camera& camera) {
-//	Shader debugShader("dot.vert", "dot.frag", false);
-//	debugShader.Activate();
-//
-//	glUniform4f(glGetUniformLocation(meshShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-//	glUniform3f(glGetUniformLocation(meshShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-//
-//	glEnable(GL_DEPTH_TEST);
-//
-//	Shader superShader("super.vert", "super.frag", true);
-//	SuperMesh* superMesh = mapper->generateSuperMesh();
-//
-//	superShader.Activate();
-//
-//	std::cout << "Super mesh vertices amount = " << superMesh->vertices.size() << std::endl;
-//	std::cout << "Super mesh indices amount = " << superMesh->indices.size() << std::endl;
-//
-//	glUniform4f(glGetUniformLocation(superShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-//	glUniform3f(glGetUniformLocation(superShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-//
-//	glEnable(GL_DEPTH_TEST);
-//
-//	while (!glfwWindowShouldClose(window))
-//	{
-//		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-//		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//		camera.Inputs(window);
-//		camera.updateMatrix(45.0f, 0.1f, 100.0f);
-//
-//		glUniform1f(glGetUniformLocation(superShader.ID, "t"), camera.t);
-//		(*superMesh).Draw(superShader, camera);
-//		glfwSwapBuffers(window);
-//		glfwPollEvents();
-//	}
-//
-//	meshShader.Delete();
-//}

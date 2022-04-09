@@ -33,6 +33,9 @@ public:
 	float phi = 0.0f;
 	float teta = 0.0f;
 
+	bool enterEverPressed = false;
+	bool drawSourceMesh = true;
+
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 	bool firstRClick = true;

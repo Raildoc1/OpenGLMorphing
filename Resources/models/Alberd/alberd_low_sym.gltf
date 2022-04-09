@@ -15,7 +15,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "AlbertEinstein.001"
+            "name" : "AlbertEinstein_fixed"
         }
     ],
     "materials" : [
@@ -36,7 +36,7 @@
     ],
     "meshes" : [
         {
-            "name" : "AlbertEinstein.001",
+            "name" : "AlbertEinstein.002",
             "primitives" : [
                 {
                     "attributes" : {
@@ -54,63 +54,63 @@
         {
             "bufferView" : 0,
             "componentType" : 5126,
-            "count" : 3832,
+            "count" : 3626,
             "max" : [
-                2.5682108402252197,
-                -0.08666546642780304,
-                3.0071589946746826
+                2.5730631351470947,
+                -0.0879204124212265,
+                3.0115694999694824
             ],
             "min" : [
-                -2.5682108402252197,
-                -5.4625630378723145,
-                -2.3820438385009766
+                -2.5730631351470947,
+                -5.406933784484863,
+                -2.386265516281128
             ],
             "type" : "VEC3"
         },
         {
             "bufferView" : 1,
             "componentType" : 5126,
-            "count" : 3832,
+            "count" : 3626,
             "type" : "VEC3"
         },
         {
             "bufferView" : 2,
             "componentType" : 5126,
-            "count" : 3832,
+            "count" : 3626,
             "type" : "VEC2"
         },
         {
             "bufferView" : 3,
             "componentType" : 5123,
-            "count" : 19128,
+            "count" : 17946,
             "type" : "SCALAR"
         }
     ],
     "bufferViews" : [
         {
             "buffer" : 0,
-            "byteLength" : 45984,
+            "byteLength" : 43512,
             "byteOffset" : 0
         },
         {
             "buffer" : 0,
-            "byteLength" : 45984,
-            "byteOffset" : 45984
+            "byteLength" : 43512,
+            "byteOffset" : 43512
         },
         {
             "buffer" : 0,
-            "byteLength" : 30656,
-            "byteOffset" : 91968
+            "byteLength" : 29008,
+            "byteOffset" : 87024
         },
         {
             "buffer" : 0,
-            "byteLength" : 38256,
-            "byteOffset" : 122624
+            "byteLength" : 35892,
+            "byteOffset" : 116032
         }
     ],
     "buffers" : [
         {
-            "byteLength" : 160880,
+            "byteLength" : 151924,
             "uri" : "alberd_low_sym.bin"
         }
     ]

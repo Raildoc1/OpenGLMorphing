@@ -1,0 +1,100 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.6.16",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "human_head_high_fixed"
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Head.002",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 3425,
+            "max" : [
+                2.636841058731079,
+                -0.001143206492997706,
+                3.7947726249694824
+            ],
+            "min" : [
+                -2.636841058731079,
+                -5.977478981018066,
+                -1.482052206993103
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 3425,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 3425,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 15942,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 41100,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 41100,
+            "byteOffset" : 41100
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 27400,
+            "byteOffset" : 82200
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 31884,
+            "byteOffset" : 109600
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 141484,
+            "uri" : "human_head_fixed.bin"
+        }
+    ]
+}

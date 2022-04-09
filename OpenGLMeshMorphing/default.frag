@@ -27,7 +27,7 @@ vec4 direcLight()
 	float ambient = 0.20f;
 
 	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(vec3(-3.0f, -5.0f, -2.0f));
+	vec3 lightDirection = normalize(-lightPos);
 	float diffuse = max(dot(normal, lightDirection), 0.0f);
 
 	//return vec4(1.0f);

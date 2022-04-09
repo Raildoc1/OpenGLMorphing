@@ -177,10 +177,10 @@ void MeshData::initVertices()
 
 	for (size_t i = 0; i < vertexCount; i++)
 	{
-		if (glm::distance(vertices[i].vertex.position, glm::vec3(7.5919f, -4.6609f, -0.011087f)) < 0.01f) {
+		if (glm::distance(vertices[i].vertex.position, glm::vec3(3.7897f, -2.2591f, 0.0f)) < 0.01f) {
 			std::cout << vertices[i].eqClass << ": " << to_string(vertices[i].vertex.position) << std::endl;
 		}
-		if (glm::distance(vertices[i].vertex.position, glm::vec3(3.0009f, -2.3654f, -0.00067f)) < 0.01f) {
+		if (glm::distance(vertices[i].vertex.position, glm::vec3(2.9759f, -2.2895f, 0.00f)) < 0.01f) {
 			std::cout << vertices[i].eqClass << ": " << to_string(vertices[i].vertex.position) << std::endl;
 		}
 	}

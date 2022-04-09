@@ -110,6 +110,36 @@ void Camera::Inputs(GLFWwindow* window)
 		}
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_ENTER)) {
+		enterEverPressed = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_1)) {
+		t = 0.0f;
+		drawSourceMesh = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_2)) {
+		t = 0.2f;
+		drawSourceMesh = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_3)) {
+		t = 0.4f;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_4)) {
+		t = 0.6f;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_5)) {
+		t = 0.8f;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_6)) {
+		t = 1.0f;
+	}
+
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{

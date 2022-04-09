@@ -287,7 +287,7 @@ private:
 
 	Mesh mesh;
 
-	CoeffType coeffType = CoeffType::Kanai;
+	CoeffType coeffType = CoeffType::MVC;
 
 	int vertexCount;
 	int edgesCount;

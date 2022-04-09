@@ -14,10 +14,8 @@ vec4 direcLight()
 
 	vec3 normal = normalize(crntNormal);
 	vec3 lightDirection = normalize(-lightPos);
-	//vec3 lightDirection = normalize(vec3(-3.0f, -5.0f, -2.0f));
 	float diffuse = clamp(dot(normal, lightDirection), 0.0f, 1.0f);
-	
-	//return vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
 	return vec4(diffuse + ambient) * lightColor;
 }
 
